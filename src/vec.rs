@@ -28,6 +28,9 @@ impl Vec3 {
     pub fn dot(&self, v: Vec3) -> f64 {
         self.0 * v.0 + self.1 * v.1 + self.2 * v.2
     }
+    pub fn sqrt(&self) -> Self {
+        Vec3(self.0.sqrt(), self.1.sqrt(), self.2.sqrt())
+    }
 
     pub fn zero() -> Self {
         Vec3(0.0, 0.0, 0.0)
