@@ -21,8 +21,14 @@ impl Vec3 {
     pub fn add(&self, v: &Vec3) -> Self {
         Vec3(self.0 + v.0, self.1 + v.1, self.2 + v.2)
     }
+    pub fn add_n(&self, t: f64) -> Self {
+        Vec3(self.0 + t, self.1 + t, self.2 + t)
+    }
     pub fn subtract(&self, v: &Vec3) -> Self {
         Vec3(self.0 - v.0, self.1 - v.1, self.2 - v.2)
+    }
+    pub fn subtract_n(&self, t: f64) -> Self {
+        Vec3(self.0 - t, self.1 - t, self.2 - t)
     }
     pub fn multiply(&self, t: f64) -> Self {
         Vec3(self.0 * t, self.1 * t, self.2 * t)
@@ -37,6 +43,9 @@ impl Vec3 {
     pub fn normalize(&self) -> Self {
         let tmp = self.length();
         Vec3(self.0 / tmp, self.1 / tmp, self.2 / tmp)
+    }
+    pub fn dot(&self, v: &Vec3) -> f64 {
+        self.0 * v.0 + self.1 * v.1 + self.2 * v.2
     }
 
     pub fn zero() -> Self {
