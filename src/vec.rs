@@ -1,6 +1,6 @@
 use crate::math::mix;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vec3(f64, f64, f64);
 
 impl Vec3 {
@@ -18,25 +18,6 @@ impl Vec3 {
         self.2
     }
 
-    pub fn add(&self, v: &Vec3) -> Self {
-        Vec3(self.0 + v.0, self.1 + v.1, self.2 + v.2)
-    }
-    pub fn add_n(&self, t: f64) -> Self {
-        Vec3(self.0 + t, self.1 + t, self.2 + t)
-    }
-    pub fn subtract(&self, v: &Vec3) -> Self {
-        Vec3(self.0 - v.0, self.1 - v.1, self.2 - v.2)
-    }
-    pub fn subtract_n(&self, t: f64) -> Self {
-        Vec3(self.0 - t, self.1 - t, self.2 - t)
-    }
-    pub fn multiply(&self, t: f64) -> Self {
-        Vec3(self.0 * t, self.1 * t, self.2 * t)
-    }
-    pub fn divide(&self, t: f64) -> Self {
-        Vec3(self.0 / t, self.1 / t, self.2 / t)
-    }
-
     pub fn length(&self) -> f64 {
         (self.0 * self.0 + self.1 * self.1 + self.2 * self.2).sqrt()
     }
@@ -44,7 +25,7 @@ impl Vec3 {
         let tmp = self.length();
         Vec3(self.0 / tmp, self.1 / tmp, self.2 / tmp)
     }
-    pub fn dot(&self, v: &Vec3) -> f64 {
+    pub fn dot(&self, v: Vec3) -> f64 {
         self.0 * v.0 + self.1 * v.1 + self.2 * v.2
     }
 
@@ -55,8 +36,71 @@ impl Vec3 {
         Vec3(1.0, 1.0, 1.0)
     }
 
-    pub fn mix(a: &Vec3, b: &Vec3, t: f64) -> Self {
+    pub fn mix(a: Vec3, b: Vec3, t: f64) -> Self {
         Vec3::new(mix(a.0, b.0, t), mix(a.1, b.1, t), mix(a.2, b.2, t))
+    }
+}
+
+impl std::ops::Add for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
+    }
+}
+impl std::ops::Add<f64> for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: f64) -> Self::Output {
+        Self(self.0 + rhs, self.1 + rhs, self.2 + rhs)
+    }
+}
+impl std::ops::Sub for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2)
+    }
+}
+impl std::ops::Sub<f64> for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: f64) -> Self::Output {
+        Self(self.0 - rhs, self.1 - rhs, self.2 - rhs)
+    }
+}
+impl std::ops::Mul for Vec3 {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2)
+    }
+}
+impl std::ops::Mul<f64> for Vec3 {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self(self.0 * rhs, self.1 * rhs, self.2 * rhs)
+    }
+}
+impl std::ops::Div for Vec3 {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        if rhs.0 == 0.0 || rhs.1 == 0.0 || rhs.2 == 0.0 {
+            panic!("Cannot divide by zero!");
+        }
+        Self(self.0 / rhs.0, self.1 / rhs.1, self.2 / rhs.2)
+    }
+}
+impl std::ops::Div<f64> for Vec3 {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        if rhs == 0.0 {
+            panic!("Cannot divide by zero!");
+        }
+        Self(self.0 / rhs, self.1 / rhs, self.2 / rhs)
     }
 }
 

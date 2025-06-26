@@ -36,10 +36,8 @@ fn main() -> std::io::Result<()> {
 
     let camera_center = Point3::zero();
     let focal_length = 1.0;
-    let first_pixel = camera_center
-        .subtract(&Vec3::new(0.0, 0.0, focal_length))
-        .subtract(&viewport_uv.divide(2.0))
-        .add(&pixel_delta_uv.divide(2.0));
+    let first_pixel = camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_uv / 2.0
+        + pixel_delta_uv / 2.0;
 
     buffer.write(format!("P3\n{image_width} {image_height}\n255\n").as_bytes())?;
     let mut scene_objects = HittableList::new();
@@ -49,20 +47,17 @@ fn main() -> std::io::Result<()> {
         print!("\r{:4} / {:4}", row + 1, image_height);
         stdout().flush().unwrap();
         for col in 0..image_width {
-            let offset = Vec3::new(
-                pixel_delta_uv.x() * col as f64,
-                pixel_delta_uv.y() * row as f64,
-                0.0,
-            );
-            let current = first_pixel.add(&offset);
-            let ray = Ray::new(
-                camera_center.clone(),
-                current.subtract(&camera_center).normalize(),
-            );
+            let current = first_pixel
+                + Vec3::new(
+                    pixel_delta_uv.x() * col as f64,
+                    pixel_delta_uv.y() * row as f64,
+                    0.0,
+                );
+            let ray = Ray::new(camera_center, (current - camera_center).normalize());
             let factor = ray.direction().y() * 0.5 + 0.5;
-            let mut color = Vec3::mix(&Vec3::one(), &Vec3::new(0.5, 0.7, 1.0), factor);
+            let mut color = Vec3::mix(Vec3::one(), Vec3::new(0.5, 0.7, 1.0), factor);
             if let Some(result) = scene_objects.hit(&ray, (0.0, 100.0)) {
-                color = result.normal().multiply(0.5).add_n(0.5);
+                color = *result.normal() * 0.5 + 0.5;
             }
             buffer.write(write_color(&color).as_bytes())?;
         }

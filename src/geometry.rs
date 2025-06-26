@@ -17,10 +17,10 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_range: (f64, f64)) -> Option<HitRecord> {
-        let oc = self.center.subtract(ray.origin());
+        let oc = self.center - *ray.origin();
         let a = 1.0;
-        let h = ray.direction().dot(&oc);
-        let c = oc.dot(&oc) - self.radius * self.radius;
+        let h = ray.direction().dot(oc);
+        let c = oc.dot(oc) - self.radius * self.radius;
         let k = h * h - a * c;
         if k < 0.0 {
             None
@@ -29,11 +29,7 @@ impl Hittable for Sphere {
             let helper = |solve: f64| {
                 if solve >= t_range.0 && solve <= t_range.1 {
                     let p = ray.at(solve);
-                    Some(HitRecord::new(
-                        p.clone(),
-                        p.subtract(&self.center).normalize(),
-                        solve,
-                    ))
+                    Some(HitRecord::new(p, (p - self.center).normalize(), solve))
                 } else {
                     None
                 }
