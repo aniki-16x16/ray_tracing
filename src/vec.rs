@@ -58,6 +58,20 @@ impl std::ops::Add<f64> for Vec3 {
         Self(self.0 + rhs, self.1 + rhs, self.2 + rhs)
     }
 }
+impl std::ops::AddAssign for Vec3 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+        self.2 += rhs.2;
+    }
+}
+impl std::ops::AddAssign<f64> for Vec3 {
+    fn add_assign(&mut self, rhs: f64) {
+        self.0 += rhs;
+        self.1 += rhs;
+        self.2 += rhs;
+    }
+}
 impl std::ops::Sub for Vec3 {
     type Output = Self;
 
