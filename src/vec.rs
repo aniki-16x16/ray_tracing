@@ -1,4 +1,8 @@
-use crate::math::mix;
+use std::ops::Range;
+
+use rand::distr::{Distribution, StandardUniform};
+
+use crate::{math::mix, random::m_random_range};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3(f64, f64, f64);
@@ -18,8 +22,11 @@ impl Vec3 {
         self.2
     }
 
+    pub fn length_squared(&self) -> f64 {
+        self.0 * self.0 + self.1 * self.1 + self.2 * self.2
+    }
     pub fn length(&self) -> f64 {
-        (self.0 * self.0 + self.1 * self.1 + self.2 * self.2).sqrt()
+        self.length_squared().sqrt()
     }
     pub fn normalize(&self) -> Self {
         let tmp = self.length();
@@ -40,7 +47,15 @@ impl Vec3 {
     }
 
     pub fn mix(a: Vec3, b: Vec3, t: f64) -> Self {
-        Vec3::new(mix(a.0, b.0, t), mix(a.1, b.1, t), mix(a.2, b.2, t))
+        Vec3(mix(a.0, b.0, t), mix(a.1, b.1, t), mix(a.2, b.2, t))
+    }
+
+    pub fn random_rage(range: Range<f64>) -> Self {
+        Vec3(
+            m_random_range(range.clone()),
+            m_random_range(range.clone()),
+            m_random_range(range),
+        )
     }
 }
 
@@ -118,6 +133,19 @@ impl std::ops::Div<f64> for Vec3 {
             panic!("Cannot divide by zero!");
         }
         Self(self.0 / rhs, self.1 / rhs, self.2 / rhs)
+    }
+}
+impl std::ops::Neg for Vec3 {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Vec3(-self.0, -self.1, -self.2)
+    }
+}
+
+impl Distribution<Vec3> for StandardUniform {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Vec3 {
+        Vec3(rng.random(), rng.random(), rng.random())
     }
 }
 

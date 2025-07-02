@@ -1,10 +1,9 @@
 use std::io::Write;
 use std::{fs::File, io::stdout};
 
-use rand::Rng;
-
-use crate::color::write_color;
+use crate::color::{Color, write_color};
 use crate::hittable::Hittable;
+use crate::random::{m_random, random_vector_on_sphere};
 use crate::ray::Ray;
 use crate::{
     hittable::HittableList,
@@ -12,6 +11,8 @@ use crate::{
 };
 
 const SAMPLES_PER_PIXEL: i32 = 10;
+const DEFAULT_MAX_RAY_RANGE: f64 = 100.0;
+const MAX_DEPTH: i32 = 50;
 
 pub struct Camera {
     aspect_ratio: f64,
@@ -20,7 +21,7 @@ pub struct Camera {
     pixel_delta_uv: Vec3,
     center: Point3,
     focal_length: f64,
-    first_pixel: Vec3,
+    first_pixel: Point3,
 }
 
 impl Camera {
@@ -71,31 +72,48 @@ impl Camera {
             )
             .as_bytes(),
         )?;
-        let mut rng = rand::rng();
         for row in 0..height {
             print!("\r{:4} / {:4}", row + 1, height);
             stdout().flush().unwrap();
             for col in 0..width {
-                let mut color = Vec3::zero();
+                let mut color = Color::zero();
                 for _ in 0..SAMPLES_PER_PIXEL {
                     let offset = Vec3::new(
-                        col as f64 + rng.random::<f64>() - 0.5,
-                        row as f64 + rng.random::<f64>() - 0.5,
+                        col as f64 + m_random::<f64>() - 0.5,
+                        row as f64 + m_random::<f64>() - 0.5,
                         0.0,
                     );
                     let current = *first_pixel + offset * *pixel_delta_uv;
                     let ray = Ray::new(*center, (current - *center).normalize());
-                    let factor = ray.direction().y() * 0.5 + 0.5;
-                    color += match world.hit(&ray, (0.0, 100.0)) {
-                        Some(result) => *result.normal() * 0.5 + 0.5,
-                        None => Vec3::mix(Vec3::one(), Vec3::new(0.5, 0.7, 1.0), factor),
-                    };
+                    color += Self::calc_ray(&ray, world, 0);
                 }
                 color = (color / SAMPLES_PER_PIXEL as f64).sqrt();
-                buffer.write(write_color(&color).as_bytes())?;
+                buffer.write(write_color(color).as_bytes())?;
             }
         }
         println!("\ndone");
         Ok(())
+    }
+
+    fn calc_ray(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
+        if depth >= MAX_DEPTH {
+            return Vec3::zero();
+        }
+        match world.hit(ray, (0.001, DEFAULT_MAX_RAY_RANGE)) {
+            Some(result) => {
+                let scatter_result = result.material.scatter(ray, &result);
+                scatter_result.attenuation
+                    * Self::calc_ray(
+                        &Ray::new(result.p, scatter_result.scattered),
+                        world,
+                        depth + 1,
+                    )
+            }
+            None => Color::mix(
+                Color::one(),
+                Color::new(0.5, 0.7, 1.0),
+                ray.direction.y() * 0.5 + 0.5,
+            ),
+        }
     }
 }
