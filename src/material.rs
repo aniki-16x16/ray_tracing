@@ -1,5 +1,10 @@
 use crate::{
-    color::Color, hittable::HitRecord, random::random_vector_on_sphere, ray::Ray, vec::Vec3,
+    color::Color,
+    hittable::HitRecord,
+    math::{reflect, refract},
+    random::random_vector_on_sphere,
+    ray::Ray,
+    vec::Vec3,
 };
 
 pub struct ScatterResult {
@@ -8,7 +13,7 @@ pub struct ScatterResult {
 }
 
 pub trait Material {
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> ScatterResult;
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult>;
 }
 
 pub struct Lambertian {
@@ -22,29 +27,65 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> ScatterResult {
-        ScatterResult {
+    fn scatter(&self, _ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
+        let scatter_direction = record.normal + random_vector_on_sphere(record.normal);
+        Some(ScatterResult {
             attenuation: self.color,
-            scattered: record.normal + random_vector_on_sphere(record.normal),
-        }
+            scattered: scatter_direction.normalize(),
+        })
     }
 }
 
 pub struct Metal {
     color: Color,
+    fuzz: f64,
 }
 
 impl Metal {
-    pub fn new(color: Color) -> Self {
-        Metal { color }
+    pub fn new(color: Color, fuzz: f64) -> Self {
+        Metal { color, fuzz }
     }
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> ScatterResult {
-        ScatterResult {
-            attenuation: self.color,
-            scattered: ray.direction - record.normal * 2.0 * record.normal.dot(ray.direction),
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
+        let mut scatter_direction = reflect(ray.direction, record.normal).normalize();
+        scatter_direction += Vec3::random_rage(-1.0..1.0) * self.fuzz;
+        if scatter_direction.dot(record.normal) > 0.0 {
+            Some(ScatterResult {
+                attenuation: self.color,
+                scattered: scatter_direction.normalize(),
+            })
+        } else {
+            None
         }
+    }
+}
+
+pub struct Dielectric {
+    eta: f64,
+}
+
+impl Dielectric {
+    pub fn new(eta: f64) -> Self {
+        Dielectric { eta }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
+        let scatter_result = refract(
+            if ray.direction.dot(record.normal) > 0.0 {
+                self.eta
+            } else {
+                1.0 / self.eta
+            },
+            ray.direction,
+            record.normal,
+        );
+        Some(ScatterResult {
+            attenuation: Color::one(),
+            scattered: scatter_result,
+        })
     }
 }

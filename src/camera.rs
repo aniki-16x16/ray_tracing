@@ -79,8 +79,8 @@ impl Camera {
                 let mut color = Color::zero();
                 for _ in 0..SAMPLES_PER_PIXEL {
                     let offset = Vec3::new(
-                        col as f64 + m_random::<f64>() - 0.5,
-                        row as f64 + m_random::<f64>() - 0.5,
+                        col as f64 - 0.5 + m_random::<f64>(),
+                        row as f64 - 0.5 + m_random::<f64>(),
                         0.0,
                     );
                     let current = *first_pixel + offset * *pixel_delta_uv;
@@ -100,15 +100,17 @@ impl Camera {
             return Vec3::zero();
         }
         match world.hit(ray, (0.001, DEFAULT_MAX_RAY_RANGE)) {
-            Some(result) => {
-                let scatter_result = result.material.scatter(ray, &result);
-                scatter_result.attenuation
-                    * Self::calc_ray(
-                        &Ray::new(result.p, scatter_result.scattered),
-                        world,
-                        depth + 1,
-                    )
-            }
+            Some(result) => match result.material.scatter(ray, &result) {
+                Some(scatter_result) => {
+                    scatter_result.attenuation
+                        * Self::calc_ray(
+                            &Ray::new(result.p, scatter_result.scattered),
+                            world,
+                            depth + 1,
+                        )
+                }
+                None => Color::zero(),
+            },
             None => Color::mix(
                 Color::one(),
                 Color::new(0.5, 0.7, 1.0),

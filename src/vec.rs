@@ -61,14 +61,12 @@ impl Vec3 {
 
 impl std::ops::Add for Vec3 {
     type Output = Self;
-
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
     }
 }
 impl std::ops::Add<f64> for Vec3 {
     type Output = Self;
-
     fn add(self, rhs: f64) -> Self::Output {
         Self(self.0 + rhs, self.1 + rhs, self.2 + rhs)
     }
@@ -89,35 +87,36 @@ impl std::ops::AddAssign<f64> for Vec3 {
 }
 impl std::ops::Sub for Vec3 {
     type Output = Self;
-
     fn sub(self, rhs: Self) -> Self::Output {
         Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2)
     }
 }
 impl std::ops::Sub<f64> for Vec3 {
     type Output = Self;
-
     fn sub(self, rhs: f64) -> Self::Output {
         Self(self.0 - rhs, self.1 - rhs, self.2 - rhs)
     }
 }
 impl std::ops::Mul for Vec3 {
     type Output = Self;
-
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2)
     }
 }
 impl std::ops::Mul<f64> for Vec3 {
     type Output = Self;
-
     fn mul(self, rhs: f64) -> Self::Output {
         Self(self.0 * rhs, self.1 * rhs, self.2 * rhs)
     }
 }
+impl std::ops::Mul<Vec3> for f64 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        Vec3(rhs.0 * self, rhs.1 * self, rhs.2 * self)
+    }
+}
 impl std::ops::Div for Vec3 {
     type Output = Self;
-
     fn div(self, rhs: Self) -> Self::Output {
         if rhs.0 == 0.0 || rhs.1 == 0.0 || rhs.2 == 0.0 {
             panic!("Cannot divide by zero!");
@@ -127,7 +126,6 @@ impl std::ops::Div for Vec3 {
 }
 impl std::ops::Div<f64> for Vec3 {
     type Output = Self;
-
     fn div(self, rhs: f64) -> Self::Output {
         if rhs == 0.0 {
             panic!("Cannot divide by zero!");
@@ -137,7 +135,6 @@ impl std::ops::Div<f64> for Vec3 {
 }
 impl std::ops::Neg for Vec3 {
     type Output = Self;
-
     fn neg(self) -> Self::Output {
         Vec3(-self.0, -self.1, -self.2)
     }
