@@ -3,7 +3,7 @@ use std::{fs::File, io::stdout};
 
 use crate::color::{Color, write_color};
 use crate::hittable::Hittable;
-use crate::random::{m_random, random_vector_on_sphere};
+use crate::random::m_random;
 use crate::ray::Ray;
 use crate::{
     hittable::HittableList,
@@ -25,7 +25,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Self {
+    pub fn new(focal_length: f64) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let image_width = 800;
         let image_height = (image_width as f64 / aspect_ratio).floor() as i32;
@@ -41,7 +41,7 @@ impl Camera {
         );
 
         let camera_center = Point3::zero();
-        let focal_length = 1.0;
+        let focal_length = focal_length;
         let first_pixel = camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_uv / 2.0
             + pixel_delta_uv / 2.0;
 
