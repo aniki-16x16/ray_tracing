@@ -35,11 +35,14 @@ impl Hittable for Sphere {
             let helper = |solve: f64| {
                 if solve >= t_range.0 && solve <= t_range.1 {
                     let p = ray.at(solve);
+                    let normal = (p - self.center).normalize();
+                    let front_face = ray.direction.dot(normal) < 0.0;
                     Some(HitRecord::new(
                         p,
-                        (p - self.center).normalize(),
+                        if front_face { normal } else { -normal },
                         solve,
                         self.material.as_ref(),
+                        front_face,
                     ))
                 } else {
                     None

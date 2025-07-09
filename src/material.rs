@@ -1,5 +1,5 @@
 use crate::{
-    color::Color,
+    color::{self, Color},
     hittable::HitRecord,
     math::{reflect, refract, schlick_approx},
     random::{m_random, random_vector_on_sphere},
@@ -74,15 +74,15 @@ impl Dielectric {
 
 impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
-        let ratio = if ray.direction.dot(record.normal) > 0.0 {
-            self.eta
-        } else {
+        let ratio = if record.front_face {
             1.0 / self.eta
+        } else {
+            self.eta
         };
-        let cos_theta = -ray.direction.dot(record.normal);
+        let cos_theta = (-ray.direction).dot(record.normal).min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let scatter_result =
-            if ratio * sin_theta > 1.0 || m_random::<f64>() > schlick_approx(ratio, cos_theta) {
+            if ratio * sin_theta > 1.0 || m_random::<f64>() < schlick_approx(ratio, cos_theta) {
                 reflect(ray.direction, record.normal)
             } else {
                 refract(ratio, ray.direction, record.normal)

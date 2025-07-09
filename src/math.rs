@@ -9,9 +9,9 @@ pub fn reflect(direction: Vec3, normal: Vec3) -> Vec3 {
 }
 
 pub fn refract(ratio: f64, direc: Vec3, normal: Vec3) -> Vec3 {
-    let cos_theta = -direc.dot(normal);
-    let perp = ratio * (direc - cos_theta * normal);
-    let para = -(1.0 - perp.length_squared()).abs().sqrt() * normal;
+    let cos_theta = (-direc).dot(normal).min(1.0);
+    let perp = ratio * (direc + cos_theta * normal);
+    let para = -(1.0 - perp.length_squared()).sqrt() * normal;
     perp + para
 }
 
