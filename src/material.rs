@@ -1,5 +1,5 @@
 use crate::{
-    color::{self, Color},
+    color::Color,
     hittable::HitRecord,
     math::{reflect, refract, schlick_approx},
     random::{m_random, random_vector_on_sphere},

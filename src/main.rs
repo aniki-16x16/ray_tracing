@@ -14,37 +14,37 @@ use crate::{
     geometry::Sphere,
     hittable::HittableList,
     material::{Dielectric, Lambertian, Metal},
-    vec::Point3,
+    vec::{Point3, Vec3},
 };
-
-const FOCAL_LENGTH: f64 = 1.0;
 
 fn main() -> std::io::Result<()> {
     let mut world = HittableList::new();
     let ground = Sphere::new(
-        Point3::new(0.0, -100.5, -1.0),
+        Point3::new(0.0, -100.5, 0.0),
         100.0,
-        Lambertian::new(Color::new(0.5, 0.6, 0.2)),
+        Lambertian::new(Color::new(0.1, 0.5, 0.2)),
     );
     let center_ball = Sphere::new(
-        Point3::new(0.0, 0.0, -1.0),
+        Point3::new(0.0, 0.0, 0.0),
         0.5,
-        Lambertian::new(Color::new(0.9, 0.9, 0.9)),
+        Lambertian::new(Color::new(0.8, 0.8, 0.8)),
     );
-    let right_ball = Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, Dielectric::new(1.5));
-    let bubble = Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.4, Dielectric::new(1.0 / 1.5));
-    let left_ball = Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
+    let left_ball = Sphere::new(Point3::new(-1.0, 0.0, 0.0), 0.5, Dielectric::new(1.5));
+    let bubble = Sphere::new(Point3::new(-1.0, 0.0, 0.0), 0.3, Dielectric::new(1.0 / 1.5));
+    let right_ball = Sphere::new(
+        Point3::new(1.0, 0.0, 0.0),
         0.5,
-        Metal::new(Color::new(0.5, 0.1, 0.2), 0.2),
+        Metal::new(Color::new(0.2, 0.5, 0.8), 0.2),
     );
-    world.push(center_ball);
-    world.push(ground);
-    world.push(right_ball);
-    world.push(bubble);
-    world.push(left_ball);
+    world
+        .push(ground)
+        .push(center_ball)
+        .push(left_ball)
+        .push(bubble)
+        .push(right_ball);
 
-    let camera = Camera::new(FOCAL_LENGTH);
+    let vup = Vec3::new(0.0, 0.5, 0.0);
+    let camera = Camera::new(60.0, Point3::new(-3.0, 3.0, 2.0), Point3::zero(), vup);
     camera.render(&world)?;
 
     Ok(())

@@ -35,6 +35,13 @@ impl Vec3 {
     pub fn dot(&self, v: Vec3) -> f64 {
         self.0 * v.0 + self.1 * v.1 + self.2 * v.2
     }
+    pub fn cross(&self, v: Vec3) -> Vec3 {
+        Vec3(
+            self.1 * v.2 - self.2 * v.1,
+            self.2 * v.0 - self.0 * v.2,
+            self.0 * v.1 - self.1 * v.0,
+        )
+    }
     pub fn sqrt(&self) -> Self {
         Vec3(self.0.sqrt(), self.1.sqrt(), self.2.sqrt())
     }

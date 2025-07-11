@@ -45,8 +45,9 @@ impl HittableList {
         HittableList { list: vec![] }
     }
 
-    pub fn push(&mut self, value: impl Hittable + 'static) {
+    pub fn push(&mut self, value: impl Hittable + 'static) -> &mut Self {
         self.list.push(Box::new(value));
+        self
     }
 
     pub fn len(&self) -> usize {
