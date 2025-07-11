@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, f64::consts::PI};
 
 use rand::{
     Rng,
@@ -37,4 +37,10 @@ pub fn random_vector_on_sphere(normal: Vec3) -> Vec3 {
             };
         }
     }
+}
+
+pub fn random_in_disk() -> (f64, f64) {
+    let radius = m_random::<f64>();
+    let angle = m_random::<f64>() * PI * 2.0;
+    (angle.cos() * radius, angle.sin() * radius)
 }

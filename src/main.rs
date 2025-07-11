@@ -44,7 +44,14 @@ fn main() -> std::io::Result<()> {
         .push(right_ball);
 
     let vup = Vec3::new(0.0, 0.5, 0.0);
-    let camera = Camera::new(60.0, Point3::new(-3.0, 3.0, 2.0), Point3::zero(), vup);
+    let camera = Camera::new(
+        60.0,
+        Point3::new(-3.0, 3.0, 2.0),
+        Point3::zero(),
+        vup,
+        5.0,
+        10.0,
+    );
     camera.render(&world)?;
 
     Ok(())
