@@ -3,14 +3,14 @@ use std::{fs::File, io::stdout};
 
 use crate::color::{Color, write_color};
 use crate::hittable::Hittable;
-use crate::random::{m_random, m_random_range, random_in_disk};
+use crate::random::{m_random, random_in_disk};
 use crate::ray::Ray;
 use crate::{
     hittable::HittableList,
     vec::{Point3, Vec3},
 };
 
-const SAMPLES_PER_PIXEL: i32 = 50;
+const SAMPLES_PER_PIXEL: i32 = 100;
 const DEFAULT_MAX_RAY_RANGE: f64 = 100.0;
 const MAX_DEPTH: i32 = 50;
 
@@ -33,7 +33,7 @@ impl Camera {
         defocus_angle: f64,
     ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
-        let image_width = 800;
+        let image_width = 1600;
         let image_height = (image_width as f64 / aspect_ratio).floor() as i32;
         let image_height = if image_height < 1 { 1 } else { image_height };
 

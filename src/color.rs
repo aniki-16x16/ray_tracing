@@ -10,3 +10,8 @@ pub fn write_color(color: Color) -> String {
     );
     format!("{} {} {}\n", tmp.x(), tmp.y(), tmp.z())
 }
+
+pub fn palette(a: Vec3, b: Vec3, c: Vec3, d: Vec3, t: f64) -> Color {
+    let tmp = 6.283185 * (c * t + d);
+    a + b * Vec3::new(tmp.x().cos(), tmp.y().cos(), tmp.z().cos())
+}
