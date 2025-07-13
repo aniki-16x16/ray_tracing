@@ -4,6 +4,14 @@ pub fn mix(a: f64, b: f64, t: f64) -> f64 {
     (1.0 - t) * a + t * b
 }
 
+pub fn remap_00(a: f64, b: f64, x: f64) -> f64 {
+    (x - a) / (b - a)
+}
+
+pub fn remap_01(v0: (f64, f64), v1: (f64, f64), x: f64) -> f64 {
+    mix(v1.0, v1.1, remap_00(v0.0, v0.1, x))
+}
+
 pub fn reflect(direction: Vec3, normal: Vec3) -> Vec3 {
     direction - 2.0 * direction.dot(normal) * normal
 }

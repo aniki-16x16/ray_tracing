@@ -10,7 +10,7 @@ use crate::{
     vec::{Point3, Vec3},
 };
 
-const SAMPLES_PER_PIXEL: i32 = 100;
+const SAMPLES_PER_PIXEL: i32 = 50;
 const DEFAULT_MAX_RAY_RANGE: f64 = 100.0;
 const MAX_DEPTH: i32 = 50;
 
@@ -33,7 +33,7 @@ impl Camera {
         defocus_angle: f64,
     ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
-        let image_width = 1600;
+        let image_width = 800;
         let image_height = (image_width as f64 / aspect_ratio).floor() as i32;
         let image_height = if image_height < 1 { 1 } else { image_height };
 
@@ -69,14 +69,6 @@ impl Camera {
     pub fn render(&self, world: &HittableList) -> std::io::Result<()> {
         let mut buffer = File::create("test.ppm")?;
         let (width, height) = self.image_resolution;
-        let Self {
-            first_pixel,
-            pixel_delta_uv,
-            center,
-            defocus_angle,
-            defocus_uv,
-            ..
-        } = self;
         buffer.write(
             format!(
                 "P3\n{} {}\n255\n",
@@ -90,21 +82,7 @@ impl Camera {
             for col in 0..width {
                 let mut color = Color::zero();
                 for _ in 0..SAMPLES_PER_PIXEL {
-                    let pixel_offset = (
-                        col as f64 + m_random::<f64>(),
-                        row as f64 + m_random::<f64>(),
-                    );
-                    let pixel_current = *first_pixel
-                        + pixel_offset.0 * pixel_delta_uv.0
-                        + pixel_offset.1 * pixel_delta_uv.1;
-                    let ray_current = if *defocus_angle <= 0.0 {
-                        *center
-                    } else {
-                        let offset = random_in_disk();
-                        *center + defocus_uv.0 * offset.0 + defocus_uv.1 * offset.1
-                    };
-                    let ray = Ray::new(ray_current, (pixel_current - ray_current).normalize());
-                    color += Self::calc_ray(&ray, world, 0);
+                    color += Self::calc_ray(&self.get_ray(row, col), world, 0);
                 }
                 color = (color / SAMPLES_PER_PIXEL as f64).sqrt();
                 buffer.write(write_color(color).as_bytes())?;
@@ -123,7 +101,7 @@ impl Camera {
                 Some(scatter_result) => {
                     scatter_result.attenuation
                         * Self::calc_ray(
-                            &Ray::new(result.p, scatter_result.scattered),
+                            &Ray::new(result.p, scatter_result.scattered, ray.time),
                             world,
                             depth + 1,
                         )
@@ -136,5 +114,33 @@ impl Camera {
                 ray.direction.y() * 0.5 + 0.5,
             ),
         }
+    }
+
+    fn get_ray(&self, row: i32, col: i32) -> Ray {
+        let Self {
+            pixel_delta_uv,
+            center,
+            first_pixel,
+            defocus_angle,
+            defocus_uv,
+            ..
+        } = self;
+        let pixel_offset = (
+            col as f64 + m_random::<f64>(),
+            row as f64 + m_random::<f64>(),
+        );
+        let pixel_current =
+            *first_pixel + pixel_offset.0 * pixel_delta_uv.0 + pixel_offset.1 * pixel_delta_uv.1;
+        let ray_current = if *defocus_angle <= 0.0 {
+            *center
+        } else {
+            let offset = random_in_disk();
+            *center + defocus_uv.0 * offset.0 + defocus_uv.1 * offset.1
+        };
+        Ray::new(
+            ray_current,
+            (pixel_current - ray_current).normalize(),
+            m_random::<f64>(),
+        )
     }
 }

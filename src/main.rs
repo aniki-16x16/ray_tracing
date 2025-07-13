@@ -14,11 +14,12 @@ use crate::{
     geometry::Sphere,
     hittable::HittableList,
     material::{Dielectric, Lambertian, Material, Metal},
+    math::remap_01,
     random::{m_random, m_random_range},
     vec::{Point3, Vec3},
 };
 
-const GRID_SIZE: i32 = 10;
+const GRID_SIZE: i32 = 5;
 
 fn main() -> std::io::Result<()> {
     let palette_helper = |t: f64| -> Color {
@@ -30,32 +31,49 @@ fn main() -> std::io::Result<()> {
         );
         palette(params.0, params.1, params.2, params.3, t)
     };
+    let grid_size_float = GRID_SIZE as f64;
 
     let mut world = HittableList::new();
     let ground = Sphere::new(
+        Point3::new(0.0, -1000.0, 0.0),
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
         Box::new(Lambertian::new(Color::new(0.6, 0.6, 0.6))),
     );
     let center_ball = Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
+        Point3::new(0.0, 1.0, 0.0),
         1.0,
         Box::new(Dielectric::new(1.5)),
     );
     let bubble = Sphere::new(
+        Point3::new(0.0, 1.0, 0.0),
         Point3::new(0.0, 1.0, 0.0),
         0.8,
         Box::new(Dielectric::new(1.0 / 1.5)),
     );
     let left_ball = Sphere::new(
         Point3::new(-2.0, 1.0, 0.0),
+        Point3::new(-2.0, 1.0, 0.0),
         1.0,
-        Box::new(Lambertian::new(palette_helper(0.1))),
+        Box::new(Lambertian::new(palette_helper(remap_01(
+            (-grid_size_float, grid_size_float),
+            (0.0, 1.0),
+            -2.0,
+        )))),
     );
     let right_ball = Sphere::new(
         Point3::new(2.0, 1.0, 0.0),
+        Point3::new(2.0, 1.0, 0.0),
         1.0,
-        Box::new(Metal::new(palette_helper(0.1), 0.0)),
+        Box::new(Metal::new(
+            palette_helper(remap_01(
+                (-grid_size_float, grid_size_float),
+                (0.0, 1.0),
+                2.0,
+            )),
+            0.0,
+        )),
     );
     world
         .push(ground)
@@ -75,20 +93,25 @@ fn main() -> std::io::Result<()> {
                 radius,
                 i as f64 + m_random_range(-offset..offset),
             );
+            let color = palette_helper(remap_01(
+                (-grid_size_float, grid_size_float),
+                (0.0, 1.0),
+                center.x(),
+            ));
             let mat_chance = m_random::<f64>();
             let mat: Box<dyn Material> = if mat_chance < 0.6 {
-                Box::new(Lambertian::new(palette_helper(
-                    center.x() / GRID_SIZE as f64,
-                )))
+                Box::new(Lambertian::new(color))
             } else if mat_chance < 0.95 {
-                Box::new(Metal::new(
-                    palette_helper(center.x() / GRID_SIZE as f64),
-                    m_random::<f64>() * 0.3,
-                ))
+                Box::new(Metal::new(color, m_random::<f64>() * 0.1))
             } else {
                 Box::new(Dielectric::new(1.5))
             };
-            world.push(Sphere::new(center, radius, mat));
+            world.push(Sphere::new(
+                center,
+                center + Vec3::new(0.0, m_random::<f64>() * 0.3, 0.0),
+                radius,
+                mat,
+            ));
         }
     }
 
