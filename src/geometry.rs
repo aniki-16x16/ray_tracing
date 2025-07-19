@@ -2,7 +2,7 @@ use crate::{
     hittable::{HitRecord, Hittable},
     material::Material,
     ray::Ray,
-    vec::{Point3, Vec3},
+    vec::{Point3, Vec2, Vec3},
 };
 
 pub struct Sphere {
@@ -29,7 +29,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit<'a>(&'a self, ray: &Ray, t_range: (f64, f64)) -> Option<HitRecord<'a>> {
+    fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
         let current_center = Vec3::mix(self.center, self.target_center, ray.time);
         let oc = current_center - ray.origin;
         let a = ray.direction.length_squared();
