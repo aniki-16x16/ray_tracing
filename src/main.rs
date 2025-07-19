@@ -1,3 +1,4 @@
+pub mod aabb;
 pub mod camera;
 pub mod color;
 pub mod geometry;
@@ -96,7 +97,7 @@ fn main() -> std::io::Result<()> {
             let color = palette_helper(remap_01(
                 (-grid_size_float, grid_size_float),
                 (0.0, 1.0),
-                center.x(),
+                center.0,
             ));
             let mat_chance = m_random::<f64>();
             let mat: Box<dyn Material> = if mat_chance < 0.6 {

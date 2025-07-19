@@ -5,6 +5,7 @@ use crate::color::{Color, write_color};
 use crate::hittable::Hittable;
 use crate::random::{m_random, random_in_disk};
 use crate::ray::Ray;
+use crate::vec::Vec2;
 use crate::{
     hittable::HittableList,
     vec::{Point3, Vec3},
@@ -96,7 +97,7 @@ impl Camera {
         if depth >= MAX_DEPTH {
             return Vec3::zero();
         }
-        match world.hit(ray, (0.001, DEFAULT_MAX_RAY_RANGE)) {
+        match world.hit(ray, Vec2::new(0.001, DEFAULT_MAX_RAY_RANGE)) {
             Some(result) => match result.material.scatter(ray, &result) {
                 Some(scatter_result) => {
                     scatter_result.attenuation
@@ -111,7 +112,7 @@ impl Camera {
             None => Color::mix(
                 Color::one(),
                 Color::new(0.5, 0.7, 1.0),
-                ray.direction.y() * 0.5 + 0.5,
+                ray.direction.1 * 0.5 + 0.5,
             ),
         }
     }
@@ -125,10 +126,7 @@ impl Camera {
             defocus_uv,
             ..
         } = self;
-        let pixel_offset = (
-            col as f64 + m_random::<f64>(),
-            row as f64 + m_random::<f64>(),
-        );
+        let pixel_offset = Vec2::new(col as f64, row as f64) + m_random::<Vec2>();
         let pixel_current =
             *first_pixel + pixel_offset.0 * pixel_delta_uv.0 + pixel_offset.1 * pixel_delta_uv.1;
         let ray_current = if *defocus_angle <= 0.0 {

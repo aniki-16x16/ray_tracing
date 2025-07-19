@@ -9,7 +9,7 @@ use rand::{
     rngs::ThreadRng,
 };
 
-use crate::vec::Vec3;
+use crate::vec::{Vec2, Vec3};
 
 thread_local!(static RNG: RefCell<ThreadRng> = RefCell::new(rand::rng()));
 
@@ -39,8 +39,8 @@ pub fn random_vector_on_sphere(normal: Vec3) -> Vec3 {
     }
 }
 
-pub fn random_in_disk() -> (f64, f64) {
+pub fn random_in_disk() -> Vec2 {
     let radius = m_random::<f64>();
     let angle = m_random::<f64>() * PI * 2.0;
-    (angle.cos() * radius, angle.sin() * radius)
+    Vec2::new(angle.cos() * radius, angle.sin() * radius)
 }

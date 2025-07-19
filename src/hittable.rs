@@ -3,7 +3,7 @@ use std::ops::Index;
 use crate::{
     material::Material,
     ray::Ray,
-    vec::{Point3, Vec3},
+    vec::{Point3, Vec2, Vec3},
 };
 
 pub struct HitRecord<'mat> {
@@ -33,7 +33,7 @@ impl<'a> HitRecord<'a> {
 }
 
 pub trait Hittable {
-    fn hit<'a>(&'a self, ray: &Ray, t_range: (f64, f64)) -> Option<HitRecord<'a>>;
+    fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>>;
 }
 
 pub struct HittableList {
@@ -60,11 +60,11 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray, t_range: (f64, f64)) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t_range: Vec2) -> Option<HitRecord> {
         let mut result: Option<HitRecord> = None;
         let mut closest_so_far = t_range.1;
         for item in self.list.iter() {
-            if let Some(record) = item.hit(ray, (t_range.0, closest_so_far)) {
+            if let Some(record) = item.hit(ray, Vec2::new(t_range.0, closest_so_far)) {
                 closest_so_far = record.t;
                 result.replace(record);
             }
