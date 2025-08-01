@@ -1,4 +1,5 @@
 pub mod aabb;
+pub mod bvh;
 pub mod camera;
 pub mod color;
 pub mod geometry;
@@ -9,7 +10,10 @@ pub mod random;
 pub mod ray;
 pub mod vec;
 
+use std::{sync::Arc, time::Instant};
+
 use crate::{
+    bvh::BvhNode,
     camera::Camera,
     color::{Color, palette},
     geometry::Sphere,
@@ -39,25 +43,25 @@ fn main() -> std::io::Result<()> {
         Point3::new(0.0, -1000.0, 0.0),
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Box::new(Lambertian::new(Color::new(0.6, 0.6, 0.6))),
+        Arc::new(Lambertian::new(Color::new(0.6, 0.6, 0.6))),
     );
     let center_ball = Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
         Point3::new(0.0, 1.0, 0.0),
         1.0,
-        Box::new(Dielectric::new(1.5)),
+        Arc::new(Dielectric::new(1.5)),
     );
     let bubble = Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
         Point3::new(0.0, 1.0, 0.0),
         0.8,
-        Box::new(Dielectric::new(1.0 / 1.5)),
+        Arc::new(Dielectric::new(1.0 / 1.5)),
     );
     let left_ball = Sphere::new(
         Point3::new(-2.0, 1.0, 0.0),
         Point3::new(-2.0, 1.0, 0.0),
         1.0,
-        Box::new(Lambertian::new(palette_helper(remap_01(
+        Arc::new(Lambertian::new(palette_helper(remap_01(
             (-grid_size_float, grid_size_float),
             (0.0, 1.0),
             -2.0,
@@ -67,7 +71,7 @@ fn main() -> std::io::Result<()> {
         Point3::new(2.0, 1.0, 0.0),
         Point3::new(2.0, 1.0, 0.0),
         1.0,
-        Box::new(Metal::new(
+        Arc::new(Metal::new(
             palette_helper(remap_01(
                 (-grid_size_float, grid_size_float),
                 (0.0, 1.0),
@@ -100,12 +104,12 @@ fn main() -> std::io::Result<()> {
                 center.0,
             ));
             let mat_chance = m_random::<f64>();
-            let mat: Box<dyn Material> = if mat_chance < 0.6 {
-                Box::new(Lambertian::new(color))
+            let mat: Arc<dyn Material> = if mat_chance < 0.6 {
+                Arc::new(Lambertian::new(color))
             } else if mat_chance < 0.95 {
-                Box::new(Metal::new(color, m_random::<f64>() * 0.1))
+                Arc::new(Metal::new(color, m_random::<f64>() * 0.1))
             } else {
-                Box::new(Dielectric::new(1.5))
+                Arc::new(Dielectric::new(1.5))
             };
             world.push(Sphere::new(
                 center,
@@ -115,6 +119,8 @@ fn main() -> std::io::Result<()> {
             ));
         }
     }
+    let mut world_bvh = HittableList::new();
+    world_bvh.push(BvhNode::new(&mut world.list));
 
     let vup = Vec3::new(0.0, 0.5, 0.0);
     let look_from = Point3::new(13.0, 2.0, 9.0);
@@ -127,7 +133,10 @@ fn main() -> std::io::Result<()> {
         (look_at - look_from).length(),
         1.0,
     );
-    camera.render(&world)?;
+    let start_time = Instant::now();
+    camera.render(&world_bvh)?;
+    let elapsed_time = start_time.elapsed();
+    println!("耗时{}秒", elapsed_time.as_secs_f64());
 
     Ok(())
 }

@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use crate::{
+    aabb::AABB,
     hittable::{HitRecord, Hittable},
     material::Material,
     ray::Ray,
@@ -9,7 +12,8 @@ pub struct Sphere {
     center: Point3,
     target_center: Point3,
     radius: f64,
-    material: Box<dyn Material>,
+    material: Arc<dyn Material>,
+    bbox: AABB,
 }
 
 impl Sphere {
@@ -17,13 +21,17 @@ impl Sphere {
         center: Point3,
         target_center: Point3,
         radius: f64,
-        material: Box<dyn Material>,
+        material: Arc<dyn Material>,
     ) -> Self {
         Sphere {
             center,
             target_center,
             radius,
             material,
+            bbox: AABB::from_aabb(
+                &AABB::new(center - radius, center + radius),
+                &AABB::new(target_center - radius, target_center + radius),
+            ),
         }
     }
 }
@@ -58,5 +66,8 @@ impl Hittable for Sphere {
             };
             helper((h - k) / a).or(helper((h + k) / a))
         }
+    }
+    fn bounding_box(&self) -> &AABB {
+        &self.bbox
     }
 }

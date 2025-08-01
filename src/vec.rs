@@ -1,10 +1,11 @@
-use std::ops::Range;
+use core::panic;
+use std::ops::{Index, Range};
 
 use rand::distr::{Distribution, StandardUniform};
 
 use crate::{math::mix, random::m_random_range};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 
 impl Vec3 {
@@ -53,6 +54,19 @@ impl Vec3 {
             m_random_range(range.clone()),
             m_random_range(range),
         )
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.0,
+            1 => &self.1,
+            2 => &self.2,
+            _ => panic!("Index out of bounds for Vec3"),
+        }
     }
 }
 
@@ -149,7 +163,7 @@ impl Distribution<Vec3> for StandardUniform {
 
 pub type Point3 = Vec3;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Vec2(pub f64, pub f64);
 impl Vec2 {
     pub fn new(x: f64, y: f64) -> Self {

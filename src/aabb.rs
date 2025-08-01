@@ -1,13 +1,27 @@
+use std::ops::Index;
+
 use crate::{
-    hittable::{HitRecord, Hittable},
     ray::Ray,
     vec::{Point3, Vec2},
 };
 
+#[derive(Debug, Default, Clone)]
 pub struct AABB {
     x_interval: Vec2,
     y_interval: Vec2,
     z_interval: Vec2,
+}
+
+impl Index<usize> for AABB {
+    type Output = Vec2;
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x_interval,
+            1 => &self.y_interval,
+            2 => &self.z_interval,
+            _ => panic!("Index out of bounds for AABB"),
+        }
+    }
 }
 
 impl AABB {
@@ -19,14 +33,20 @@ impl AABB {
         }
     }
 
-    fn hit(&self, ray: &Ray, t_range: Vec2) -> bool {
+    pub fn from_aabb(a: &AABB, b: &AABB) -> Self {
+        AABB {
+            x_interval: Vec2::new(a[0].0.min(b[0].0), a[0].1.max(b[0].1)),
+            y_interval: Vec2::new(a[1].0.min(b[1].0), a[1].1.max(b[1].1)),
+            z_interval: Vec2::new(a[2].0.min(b[2].0), a[2].1.max(b[2].1)),
+        }
+    }
+
+    pub fn hit(&self, ray: &Ray, t_range: Vec2) -> bool {
         let mut result = t_range;
         for idx in 0..3 {
-            let origin = [ray.origin.0, ray.origin.1, ray.origin.2][idx];
-            let direc = [ray.direction.0, ray.direction.1, ray.direction.2][idx];
-            let interval = [self.x_interval, self.y_interval, self.z_interval][idx];
-            let mut t0 = result.0.max((interval.0 - origin) / direc);
-            let mut t1 = result.1.min((interval.1 - origin) / direc);
+            let interval = self[idx];
+            let mut t0 = (interval.0 - ray.origin[idx]) / ray.direction[idx];
+            let mut t1 = (interval.1 - ray.origin[idx]) / ray.direction[idx];
             if t0 > t1 {
                 std::mem::swap(&mut t0, &mut t1);
             }

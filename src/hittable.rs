@@ -1,6 +1,7 @@
-use std::ops::Index;
+use std::{ops::Index, sync::Arc};
 
 use crate::{
+    aabb::AABB,
     material::Material,
     ray::Ray,
     vec::{Point3, Vec2, Vec3},
@@ -34,19 +35,25 @@ impl<'a> HitRecord<'a> {
 
 pub trait Hittable {
     fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>>;
+    fn bounding_box(&self) -> &AABB;
 }
 
 pub struct HittableList {
-    list: Vec<Box<dyn Hittable>>,
+    pub list: Vec<Arc<dyn Hittable>>,
+    bbox: AABB,
 }
 
 impl HittableList {
     pub fn new() -> Self {
-        HittableList { list: vec![] }
+        HittableList {
+            list: vec![],
+            bbox: AABB::default(),
+        }
     }
 
     pub fn push(&mut self, value: impl Hittable + 'static) -> &mut Self {
-        self.list.push(Box::new(value));
+        self.bbox = AABB::from_aabb(&self.bbox, value.bounding_box());
+        self.list.push(Arc::new(value));
         self
     }
 
@@ -54,7 +61,7 @@ impl HittableList {
         self.list.len()
     }
 
-    pub fn iter(&self) -> std::slice::Iter<'_, Box<dyn Hittable>> {
+    pub fn iter(&self) -> std::slice::Iter<'_, Arc<dyn Hittable>> {
         self.list.iter()
     }
 }
@@ -71,10 +78,13 @@ impl Hittable for HittableList {
         }
         result
     }
+    fn bounding_box(&self) -> &AABB {
+        &self.bbox
+    }
 }
 
 impl Index<usize> for HittableList {
-    type Output = Box<dyn Hittable>;
+    type Output = Arc<dyn Hittable>;
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.list[index]
