@@ -8,6 +8,7 @@ pub mod material;
 pub mod math;
 pub mod random;
 pub mod ray;
+pub mod texture;
 pub mod vec;
 
 use std::{sync::Arc, time::Instant};
@@ -15,118 +16,45 @@ use std::{sync::Arc, time::Instant};
 use crate::{
     bvh::BvhNode,
     camera::Camera,
-    color::{Color, palette},
+    color::Color,
     geometry::Sphere,
     hittable::HittableList,
-    material::{Dielectric, Lambertian, Material, Metal},
-    math::remap_01,
-    random::{m_random, m_random_range},
+    material::Lambertian,
+    texture::CheckerTexture,
     vec::{Point3, Vec3},
 };
 
-const GRID_SIZE: i32 = 5;
-
 fn main() -> std::io::Result<()> {
-    let palette_helper = |t: f64| -> Color {
-        let params: (Vec3, Vec3, Vec3, Vec3) = (
-            Vec3::new(0.5, 0.5, 0.5),
-            Vec3::new(0.5, 0.5, 0.5),
-            Vec3::new(1.0, 1.0, 1.0),
-            Vec3::new(0.0, 0.1, 0.2),
-        );
-        palette(params.0, params.1, params.2, params.3, t)
-    };
-    let grid_size_float = GRID_SIZE as f64;
-
     let mut world = HittableList::new();
-    let ground = Sphere::new(
-        Point3::new(0.0, -1000.0, 0.0),
-        Point3::new(0.0, -1000.0, 0.0),
-        1000.0,
-        Arc::new(Lambertian::new(Color::new(0.6, 0.6, 0.6))),
+    let ball_bottom = Sphere::new(
+        Point3::new(0.0, -10.0, 0.0),
+        Point3::new(0.0, -10.0, 0.0),
+        10.0,
+        Arc::new(Lambertian::new(CheckerTexture::with_color(
+            20.0,
+            Color::new(0.0, 0.6, 0.2),
+            Color::one(),
+        ))),
     );
-    let center_ball = Sphere::new(
-        Point3::new(0.0, 1.0, 0.0),
-        Point3::new(0.0, 1.0, 0.0),
-        1.0,
-        Arc::new(Dielectric::new(1.5)),
+    let ball_top = Sphere::new(
+        Point3::new(0.0, 2.0, 0.0),
+        Point3::new(0.0, 2.0, 0.0),
+        2.0,
+        Arc::new(Lambertian::new(CheckerTexture::with_color(
+            3.0,
+            Color::new(0.0, 0.6, 0.2),
+            Color::one(),
+        ))),
     );
-    let bubble = Sphere::new(
-        Point3::new(0.0, 1.0, 0.0),
-        Point3::new(0.0, 1.0, 0.0),
-        0.8,
-        Arc::new(Dielectric::new(1.0 / 1.5)),
-    );
-    let left_ball = Sphere::new(
-        Point3::new(-2.0, 1.0, 0.0),
-        Point3::new(-2.0, 1.0, 0.0),
-        1.0,
-        Arc::new(Lambertian::new(palette_helper(remap_01(
-            (-grid_size_float, grid_size_float),
-            (0.0, 1.0),
-            -2.0,
-        )))),
-    );
-    let right_ball = Sphere::new(
-        Point3::new(2.0, 1.0, 0.0),
-        Point3::new(2.0, 1.0, 0.0),
-        1.0,
-        Arc::new(Metal::new(
-            palette_helper(remap_01(
-                (-grid_size_float, grid_size_float),
-                (0.0, 1.0),
-                2.0,
-            )),
-            0.0,
-        )),
-    );
-    world
-        .push(ground)
-        .push(center_ball)
-        .push(left_ball)
-        .push(bubble)
-        .push(right_ball);
-    for i in -GRID_SIZE..GRID_SIZE {
-        for j in -GRID_SIZE..GRID_SIZE {
-            if i == 0 && (j.abs() == 2 || j == 0) {
-                continue;
-            }
-            let radius = m_random_range(0.05..0.3);
-            let offset = 0.5 - radius;
-            let center = Vec3::new(
-                j as f64 + m_random_range(-offset..offset),
-                radius,
-                i as f64 + m_random_range(-offset..offset),
-            );
-            let color = palette_helper(remap_01(
-                (-grid_size_float, grid_size_float),
-                (0.0, 1.0),
-                center.0,
-            ));
-            let mat_chance = m_random::<f64>();
-            let mat: Arc<dyn Material> = if mat_chance < 0.6 {
-                Arc::new(Lambertian::new(color))
-            } else if mat_chance < 0.95 {
-                Arc::new(Metal::new(color, m_random::<f64>() * 0.1))
-            } else {
-                Arc::new(Dielectric::new(1.5))
-            };
-            world.push(Sphere::new(
-                center,
-                center + Vec3::new(0.0, m_random::<f64>() * 0.3, 0.0),
-                radius,
-                mat,
-            ));
-        }
-    }
+    world.push(ball_bottom).push(ball_top);
     let mut world_bvh = HittableList::new();
     world_bvh.push(BvhNode::new(&mut world.list));
 
     let vup = Vec3::new(0.0, 0.5, 0.0);
-    let look_from = Point3::new(13.0, 2.0, 9.0);
+    let look_from = Point3::new(1.0, 3.0, 13.0);
     let look_at = Point3::new(0.0, 1.0, 0.0);
     let camera = Camera::new(
-        30.0,
+        60.0,
         look_from,
         look_at,
         vup,

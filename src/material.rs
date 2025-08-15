@@ -1,9 +1,12 @@
+use std::sync::Arc;
+
 use crate::{
     color::Color,
     hittable::HitRecord,
     math::{reflect, refract, schlick_approx},
     random::{m_random, random_vector_on_sphere},
     ray::Ray,
+    texture::Texture,
     vec::Vec3,
 };
 
@@ -17,12 +20,14 @@ pub trait Material {
 }
 
 pub struct Lambertian {
-    color: Color,
+    texture: Arc<dyn Texture>,
 }
 
 impl Lambertian {
-    pub fn new(color: Color) -> Self {
-        Lambertian { color }
+    pub fn new(texture: impl Texture + 'static) -> Self {
+        Lambertian {
+            texture: Arc::new(texture),
+        }
     }
 }
 
@@ -30,20 +35,23 @@ impl Material for Lambertian {
     fn scatter(&self, _ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
         let scatter_direction = record.normal + random_vector_on_sphere(record.normal);
         Some(ScatterResult {
-            attenuation: self.color,
+            attenuation: self.texture.value(record.uv),
             scattered: scatter_direction.normalize(),
         })
     }
 }
 
 pub struct Metal {
-    color: Color,
+    texture: Arc<dyn Texture>,
     fuzz: f64,
 }
 
 impl Metal {
-    pub fn new(color: Color, fuzz: f64) -> Self {
-        Metal { color, fuzz }
+    pub fn new(texture: impl Texture + 'static, fuzz: f64) -> Self {
+        Metal {
+            texture: Arc::new(texture),
+            fuzz,
+        }
     }
 }
 
@@ -53,7 +61,7 @@ impl Material for Metal {
         scatter_direction += Vec3::random_rage(-1.0..1.0) * self.fuzz;
         if scatter_direction.dot(record.normal) > 0.0 {
             Some(ScatterResult {
-                attenuation: self.color,
+                attenuation: self.texture.value(record.uv),
                 scattered: scatter_direction.normalize(),
             })
         } else {

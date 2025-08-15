@@ -1,4 +1,6 @@
-use crate::vec::Vec3;
+use std::f64::consts::PI;
+
+use crate::vec::{Point3, Vec2, Vec3};
 
 pub fn mix(a: f64, b: f64, t: f64) -> f64 {
     (1.0 - t) * a + t * b
@@ -27,4 +29,10 @@ pub fn schlick_approx(ratio: f64, cos_theta: f64) -> f64 {
     let mut r0 = (1.0 - ratio) / (1.0 + ratio);
     r0 *= r0;
     r0 + (1.0 - r0) * (1.0 - cos_theta).powi(5)
+}
+
+pub fn get_sphere_uv(p: Point3) -> Vec2 {
+    let theta = (-p.1).acos();
+    let phi = p.2.atan2(p.0) + PI;
+    Vec2::new(phi * 0.5 / PI, theta / PI)
 }

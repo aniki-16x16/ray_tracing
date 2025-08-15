@@ -4,6 +4,7 @@ use crate::{
     aabb::AABB,
     hittable::{HitRecord, Hittable},
     material::Material,
+    math::get_sphere_uv,
     ray::Ray,
     vec::{Point3, Vec2, Vec3},
 };
@@ -53,13 +54,14 @@ impl Hittable for Sphere {
                     let p = ray.at(solve);
                     let normal = (p - current_center).normalize();
                     let front_face = ray.direction.dot(normal) < 0.0;
-                    Some(HitRecord::new(
+                    Some(HitRecord {
                         p,
-                        if front_face { normal } else { -normal },
-                        solve,
-                        self.material.as_ref(),
+                        normal: if front_face { normal } else { -normal },
+                        t: solve,
+                        material: self.material.as_ref(),
                         front_face,
-                    ))
+                        uv: get_sphere_uv(normal),
+                    })
                 } else {
                     None
                 }
