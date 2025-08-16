@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::{fs::File, io::stdout};
+use std::io::stdout;
 
 use crate::color::{Color, write_color};
 use crate::hittable::Hittable;
@@ -16,7 +16,7 @@ const DEFAULT_MAX_RAY_RANGE: f64 = 100.0;
 const MAX_DEPTH: i32 = 50;
 
 pub struct Camera {
-    image_resolution: (i32, i32),
+    image_resolution: (u32, u32),
     pixel_delta_uv: (Vec3, Vec3),
     center: Point3,
     first_pixel: Point3,
@@ -35,7 +35,7 @@ impl Camera {
     ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let image_width = 800;
-        let image_height = (image_width as f64 / aspect_ratio).floor() as i32;
+        let image_height = (image_width as f64 / aspect_ratio).floor() as u32;
         let image_height = if image_height < 1 { 1 } else { image_height };
 
         let center = look_from;
@@ -67,16 +67,9 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, world: &HittableList) -> std::io::Result<()> {
-        let mut buffer = File::create("test.ppm")?;
+    pub fn render(&self, world: &HittableList) {
         let (width, height) = self.image_resolution;
-        buffer.write(
-            format!(
-                "P3\n{} {}\n255\n",
-                self.image_resolution.0, self.image_resolution.1
-            )
-            .as_bytes(),
-        )?;
+        let mut buffer = image::ImageBuffer::new(width, height);
         for row in 0..height {
             print!("\r{:4} / {:4}", row + 1, height);
             stdout().flush().unwrap();
@@ -86,11 +79,14 @@ impl Camera {
                     color += Self::calc_ray(&self.get_ray(row, col), world, 0);
                 }
                 color = (color / SAMPLES_PER_PIXEL as f64).sqrt();
-                buffer.write(write_color(color).as_bytes())?;
+                let pixel = buffer.get_pixel_mut(col, row);
+                *pixel = image::Rgb(write_color(color));
             }
         }
+        buffer
+            .save("output.png")
+            .expect("Failed to save render result.");
         println!("\ndone");
-        Ok(())
     }
 
     fn calc_ray(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
@@ -117,7 +113,7 @@ impl Camera {
         }
     }
 
-    fn get_ray(&self, row: i32, col: i32) -> Ray {
+    fn get_ray(&self, row: u32, col: u32) -> Ray {
         let Self {
             pixel_delta_uv,
             center,

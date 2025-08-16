@@ -2,13 +2,12 @@ use crate::vec::Vec3;
 
 pub type Color = Vec3;
 
-pub fn write_color(color: Color) -> String {
-    let tmp = Vec3::new(
-        (color.0 * 255.999).floor(),
-        (color.1 * 255.999).floor(),
-        (color.2 * 255.999).floor(),
-    );
-    format!("{} {} {}\n", tmp.0, tmp.1, tmp.2)
+pub fn write_color(color: Color) -> [u8; 3] {
+    [
+        (color.0 * 255.999).floor() as u8,
+        (color.1 * 255.999).floor() as u8,
+        (color.2 * 255.999).floor() as u8,
+    ]
 }
 
 pub fn palette(a: Vec3, b: Vec3, c: Vec3, d: Vec3, t: f64) -> Color {

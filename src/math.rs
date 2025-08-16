@@ -33,6 +33,6 @@ pub fn schlick_approx(ratio: f64, cos_theta: f64) -> f64 {
 
 pub fn get_sphere_uv(p: Point3) -> Vec2 {
     let theta = (-p.1).acos();
-    let phi = p.2.atan2(p.0) + PI;
+    let phi = -p.2.atan2(p.0) + PI;
     Vec2::new(phi * 0.5 / PI, theta / PI)
 }

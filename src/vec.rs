@@ -12,6 +12,9 @@ impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3(x, y, z)
     }
+    pub fn from_single(v: f64) -> Self {
+        Vec3(v, v, v)
+    }
 
     pub fn length_squared(&self) -> f64 {
         self.0 * self.0 + self.1 * self.1 + self.2 * self.2
@@ -168,6 +171,9 @@ pub struct Vec2(pub f64, pub f64);
 impl Vec2 {
     pub fn new(x: f64, y: f64) -> Self {
         Vec2(x, y)
+    }
+    pub fn from_single(v: f64) -> Self {
+        Vec2(v, v)
     }
 
     pub fn length_squared(&self) -> f64 {
