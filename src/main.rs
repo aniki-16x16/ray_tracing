@@ -6,6 +6,7 @@ pub mod geometry;
 pub mod hittable;
 pub mod material;
 pub mod math;
+pub mod noise;
 pub mod random;
 pub mod ray;
 pub mod texture;
@@ -16,38 +17,33 @@ use std::{sync::Arc, time::Instant};
 use crate::{
     bvh::BvhNode,
     camera::Camera,
-    color::Color,
     geometry::Sphere,
     hittable::HittableList,
     material::Lambertian,
-    texture::{CheckerTexture, ImageTexture},
-    vec::{Point3, Vec2, Vec3},
+    texture::NoiseTexture,
+    vec::{Point3, Vec3},
 };
 
 fn main() {
     let mut world = HittableList::new();
     let ball_bottom = Sphere::new(
-        Point3::new(0.0, -10.0, 0.0),
-        Point3::new(0.0, -10.0, 0.0),
-        10.0,
-        Arc::new(Lambertian::new(CheckerTexture::with_color(
-            Vec2::new(20.0, 40.0),
-            Color::new(0.0, 0.6, 0.2),
-            Color::one(),
-        ))),
+        Point3::new(0.0, -100.0, 0.0),
+        Point3::new(0.0, -100.0, 0.0),
+        100.0,
+        Arc::new(Lambertian::new(NoiseTexture::new())),
     );
     let ball_top = Sphere::new(
         Point3::new(0.0, 2.0, 0.0),
         Point3::new(0.0, 2.0, 0.0),
         2.0,
-        Arc::new(Lambertian::new(ImageTexture::new("earthmap.jpg"))),
+        Arc::new(Lambertian::new(NoiseTexture::new())),
     );
     world.push(ball_bottom).push(ball_top);
     let mut world_bvh = HittableList::new();
     world_bvh.push(BvhNode::new(&mut world.list));
 
     let vup = Vec3::new(0.0, 0.5, 0.0);
-    let look_from = Point3::new(0.0, 2.0, 13.0);
+    let look_from = Point3::new(3.0, 4.0, 15.0);
     let look_at = Point3::new(0.0, 1.0, 0.0);
     let camera = Camera::new(
         60.0,

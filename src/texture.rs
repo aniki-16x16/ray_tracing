@@ -1,9 +1,13 @@
 use image::{DynamicImage, GenericImageView, ImageReader};
 
-use crate::{color::Color, vec::Vec2};
+use crate::{
+    color::Color,
+    noise::PerlinNoise,
+    vec::{Point3, Vec2},
+};
 
 pub trait Texture {
-    fn value(&self, uv: Vec2) -> Color;
+    fn value(&self, uv: Vec2, p: Point3) -> Color;
 }
 
 pub struct SolidTexture {
@@ -17,7 +21,7 @@ impl SolidTexture {
 }
 
 impl Texture for SolidTexture {
-    fn value(&self, _: Vec2) -> Color {
+    fn value(&self, _: Vec2, _: Point3) -> Color {
         self.color
     }
 }
@@ -47,7 +51,7 @@ impl CheckerTexture {
 }
 
 impl Texture for CheckerTexture {
-    fn value(&self, uv: Vec2) -> Color {
+    fn value(&self, uv: Vec2, _: Point3) -> Color {
         let uv = uv * self.scale;
         if (uv.0.floor() + uv.1.floor()) % 2.0 == 0.0 {
             self.color1
@@ -72,7 +76,7 @@ impl ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, uv: Vec2) -> Color {
+    fn value(&self, uv: Vec2, _: Point3) -> Color {
         // 如果图片没有加载成功，返回一个显眼的颜色用于调试
         if self.image.width() == 0 || self.image.height() == 0 {
             return Color::new(0.0, 1.0, 1.0); // 青色
@@ -83,5 +87,23 @@ impl Texture for ImageTexture {
             (uv.1 * self.image.height() as f64) as u32,
         );
         Color::new(pixel[0] as f64, pixel[1] as f64, pixel[2] as f64) / 255.0
+    }
+}
+
+pub struct NoiseTexture {
+    noise: PerlinNoise,
+}
+
+impl NoiseTexture {
+    pub fn new() -> Self {
+        NoiseTexture {
+            noise: PerlinNoise::new(),
+        }
+    }
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, _: Vec2, p: Point3) -> Color {
+        Color::from_single(self.noise.value(p))
     }
 }

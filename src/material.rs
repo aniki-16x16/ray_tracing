@@ -35,7 +35,7 @@ impl Material for Lambertian {
     fn scatter(&self, _ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
         let scatter_direction = record.normal + random_vector_on_sphere(record.normal);
         Some(ScatterResult {
-            attenuation: self.texture.value(record.uv),
+            attenuation: self.texture.value(record.uv, record.p),
             scattered: scatter_direction.normalize(),
         })
     }
@@ -61,7 +61,7 @@ impl Material for Metal {
         scatter_direction += Vec3::random_rage(-1.0..1.0) * self.fuzz;
         if scatter_direction.dot(record.normal) > 0.0 {
             Some(ScatterResult {
-                attenuation: self.texture.value(record.uv),
+                attenuation: self.texture.value(record.uv, record.p),
                 scattered: scatter_direction.normalize(),
             })
         } else {
