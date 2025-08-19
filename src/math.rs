@@ -36,3 +36,7 @@ pub fn get_sphere_uv(p: Point3) -> Vec2 {
     let phi = -p.2.atan2(p.0) + PI;
     Vec2::new(phi * 0.5 / PI, theta / PI)
 }
+
+pub fn hermite_t(t: f64) -> f64 {
+    t * t * (3.0 - 2.0 * t)
+}

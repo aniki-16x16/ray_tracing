@@ -53,6 +53,9 @@ impl Vec3 {
     pub fn mix(a: Vec3, b: Vec3, t: f64) -> Self {
         Vec3(mix(a.0, b.0, t), mix(a.1, b.1, t), mix(a.2, b.2, t))
     }
+    pub fn map(&self, f: impl Fn(f64) -> f64) -> Self {
+        Vec3(f(self.0), f(self.1), f(self.2))
+    }
 
     pub fn random_rage(range: Range<f64>) -> Self {
         Vec3(
@@ -132,6 +135,13 @@ impl std::ops::Mul<Vec3> for f64 {
     type Output = Vec3;
     fn mul(self, rhs: Vec3) -> Self::Output {
         Vec3(rhs.0 * self, rhs.1 * self, rhs.2 * self)
+    }
+}
+impl std::ops::MulAssign<f64> for Vec3 {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.0 *= rhs;
+        self.1 *= rhs;
+        self.2 *= rhs;
     }
 }
 
