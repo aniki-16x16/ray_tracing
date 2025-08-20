@@ -50,6 +50,17 @@ impl PerlinNoise {
         result
     }
 
+    pub fn turb(&self, mut p: Point3, depth: usize) -> f64 {
+        let mut result = 0.0;
+        let mut weight = 1.0;
+        for _ in 0..depth {
+            result += weight * self.value(p);
+            weight *= 0.5;
+            p *= 2.0;
+        }
+        result.clamp(-1.0, 1.0)
+    }
+
     fn value_at(&self, p: Point3) -> Vec3 {
         let i = (p.0 as i32 & 255) as usize;
         let j = (p.1 as i32 & 255) as usize;

@@ -104,6 +104,7 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _: Vec2, p: Point3) -> Color {
-        Color::from_single(self.noise.value(p) * 0.5 + 0.5)
+        let scale = 10.0;
+        Color::from_single((10.0 * p.2 + scale * self.noise.turb(p, 7)).sin() * 0.5 + 0.5)
     }
 }
