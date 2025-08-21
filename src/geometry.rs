@@ -73,3 +73,61 @@ impl Hittable for Sphere {
         &self.bbox
     }
 }
+
+pub struct Quad {
+    q: Vec3,
+    edge: (Vec3, Vec3),
+    material: Arc<dyn Material>,
+    bbox: AABB,
+    normal: Vec3,
+    constant_d: f64,
+    constant_w: Vec3,
+}
+
+impl Quad {
+    pub fn new(q: Vec3, u: Vec3, v: Vec3, material: Arc<dyn Material>) -> Self {
+        let normal = u.cross(v);
+        Quad {
+            q,
+            edge: (u, v),
+            material,
+            bbox: AABB::from_aabb(&AABB::new(q, q + u + v), &AABB::new(q + u, q + v)),
+            normal,
+            constant_d: normal.dot(q),
+            constant_w: normal / normal.dot(normal),
+        }
+    }
+}
+
+impl Hittable for Quad {
+    fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
+        let (n, w) = (self.normal, self.constant_w);
+        let denominator = n.dot(ray.direction);
+        if denominator.abs() < 1e-8 {
+            return None;
+        }
+        let t = (self.constant_d - n.dot(ray.origin)) / denominator;
+        if t < t_range.0 || t > t_range.1 {
+            return None;
+        }
+        let front_face = denominator < 0.0;
+        let p = ray.at(t);
+        let u_t = (p - self.q).cross(self.edge.1).dot(w);
+        let v_t = (self.edge.0.cross(p - self.q)).dot(w);
+        if u_t >= 0.0 && u_t <= 1.0 && v_t >= 0.0 && v_t <= 1.0 {
+            Some(HitRecord {
+                p,
+                normal: (if front_face { n } else { -n }).normalize(),
+                t,
+                material: self.material.as_ref(),
+                front_face,
+                uv: Vec2::new(u_t, v_t),
+            })
+        } else {
+            None
+        }
+    }
+    fn bounding_box(&self) -> &AABB {
+        &self.bbox
+    }
+}

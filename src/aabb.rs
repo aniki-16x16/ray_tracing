@@ -27,9 +27,18 @@ impl Index<usize> for AABB {
 impl AABB {
     pub fn new(a: Point3, b: Point3) -> Self {
         AABB {
-            x_interval: Vec2::new(a.0.min(b.0), a.0.max(b.0)),
-            y_interval: Vec2::new(a.1.min(b.1), a.1.max(b.1)),
-            z_interval: Vec2::new(a.2.min(b.2), a.2.max(b.2)),
+            x_interval: AABB::expand_zero_thickness(Vec2::new(a.0.min(b.0), a.0.max(b.0))),
+            y_interval: AABB::expand_zero_thickness(Vec2::new(a.1.min(b.1), a.1.max(b.1))),
+            z_interval: AABB::expand_zero_thickness(Vec2::new(a.2.min(b.2), a.2.max(b.2))),
+        }
+    }
+
+    fn expand_zero_thickness(interval: Vec2) -> Vec2 {
+        let delta = 0.00001;
+        if interval.0 == interval.1 {
+            Vec2::new(interval.0 - delta / 2.0, interval.1 + delta / 2.0)
+        } else {
+            interval
         }
     }
 
