@@ -4,9 +4,9 @@ pub type Color = Vec3;
 
 pub fn write_color(color: Color) -> [u8; 3] {
     [
-        (color.0 * 255.999).floor() as u8,
-        (color.1 * 255.999).floor() as u8,
-        (color.2 * 255.999).floor() as u8,
+        (color.0.clamp(0.0, 1.0) * 255.999).floor() as u8,
+        (color.1.clamp(0.0, 1.0) * 255.999).floor() as u8,
+        (color.2.clamp(0.0, 1.0) * 255.999).floor() as u8,
     ]
 }
 

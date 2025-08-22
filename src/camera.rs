@@ -22,6 +22,7 @@ pub struct Camera {
     first_pixel: Point3,
     defocus_angle: f64,
     defocus_uv: (Vec3, Vec3),
+    background: Color,
 }
 
 impl Camera {
@@ -32,6 +33,7 @@ impl Camera {
         vup: Vec3,
         focus_dist: f64,
         defocus_angle: f64,
+        background: Color,
     ) -> Self {
         let aspect_ratio = 16.0 / 9.0;
         let image_width = 800;
@@ -64,6 +66,7 @@ impl Camera {
             first_pixel,
             defocus_angle,
             defocus_uv: (defocus_radius * uvw.0, defocus_radius * uvw.1),
+            background,
         }
     }
 
@@ -76,7 +79,7 @@ impl Camera {
             for col in 0..width {
                 let mut color = Color::zero();
                 for _ in 0..SAMPLES_PER_PIXEL {
-                    color += Self::calc_ray(&self.get_ray(row, col), world, 0);
+                    color += self.calc_ray(&self.get_ray(row, col), world, 0);
                 }
                 color = (color / SAMPLES_PER_PIXEL as f64).sqrt();
                 let pixel = buffer.get_pixel_mut(col, row);
@@ -89,7 +92,7 @@ impl Camera {
         println!("\ndone");
     }
 
-    fn calc_ray(ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
+    fn calc_ray(&self, ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {
         if depth >= MAX_DEPTH {
             return Vec3::zero();
         }
@@ -97,19 +100,16 @@ impl Camera {
             Some(result) => match result.material.scatter(ray, &result) {
                 Some(scatter_result) => {
                     scatter_result.attenuation
-                        * Self::calc_ray(
+                        * self.calc_ray(
                             &Ray::new(result.p, scatter_result.scattered, ray.time),
                             world,
                             depth + 1,
                         )
+                        + result.material.emit()
                 }
-                None => Color::zero(),
+                None => result.material.emit(),
             },
-            None => Color::mix(
-                Color::one(),
-                Color::new(0.5, 0.7, 1.0),
-                ray.direction.1 * 0.5 + 0.5,
-            ),
+            None => self.background,
         }
     }
 

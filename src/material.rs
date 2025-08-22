@@ -17,6 +17,9 @@ pub struct ScatterResult {
 
 pub trait Material {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult>;
+    fn emit(&self) -> Color {
+        Color::zero()
+    }
 }
 
 pub struct Lambertian {
@@ -99,5 +102,25 @@ impl Material for Dielectric {
             attenuation: Color::one(),
             scattered: scatter_result,
         })
+    }
+}
+
+pub struct DiffuseLight {
+    color: Color,
+    strength: f64,
+}
+
+impl DiffuseLight {
+    pub fn new(color: Color, strength: f64) -> Self {
+        DiffuseLight { color, strength }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, _: &Ray, _: &HitRecord) -> Option<ScatterResult> {
+        None
+    }
+    fn emit(&self) -> Color {
+        self.color * self.strength
     }
 }
