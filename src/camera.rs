@@ -11,8 +11,8 @@ use crate::{
     vec::{Point3, Vec3},
 };
 
-const SAMPLES_PER_PIXEL: i32 = 50;
-const DEFAULT_MAX_RAY_RANGE: f64 = 100.0;
+const SAMPLES_PER_PIXEL: i32 = 100;
+const DEFAULT_MAX_RAY_RANGE: f64 = 2000.0;
 const MAX_DEPTH: i32 = 50;
 
 pub struct Camera {
