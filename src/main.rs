@@ -16,7 +16,7 @@ use std::{sync::Arc, time::Instant};
 
 use crate::{
     bvh::BvhNode,
-    camera::Camera,
+    camera::CameraBuilder,
     color::Color,
     geometry::Quad,
     hittable::HittableList,
@@ -78,18 +78,14 @@ fn main() {
     let mut world_bvh = HittableList::new();
     world_bvh.push(BvhNode::new(&mut world.list));
 
-    let vup = Vec3::new(0.0, 0.5, 0.0);
     let look_from = Point3::new(box_size * 0.5, box_size * 0.5, -box_size);
     let look_at = Point3::new(box_size * 0.5, box_size * 0.5, box_size);
-    let camera = Camera::new(
-        90.0,
-        look_from,
-        look_at,
-        vup,
-        (look_at - look_from).length(),
-        0.0,
-        Color::zero(),
-    );
+    let camera = CameraBuilder::new(look_from, look_at)
+        .image_width(1920)
+        .vertical_fov(90.0)
+        .samples_per_pixel(200)
+        .max_ray_range(2000.0)
+        .build();
     let start_time = Instant::now();
     camera.render(&world_bvh);
     let elapsed_time = start_time.elapsed();
