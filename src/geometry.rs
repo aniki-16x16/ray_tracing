@@ -1,29 +1,42 @@
-use std::sync::Arc;
-
 use crate::{
     aabb::AABB,
     hittable::{HitRecord, Hittable},
-    material::Material,
+    material::{Material, MaterialEnum},
     math::get_sphere_uv,
     ray::Ray,
     vec::{Point3, Vec2, Vec3},
 };
 
-pub struct Sphere {
+pub enum GeometryEnum {
+    Sphere(Sphere<MaterialEnum>),
+    Quad(Quad<MaterialEnum>),
+}
+
+impl Hittable for GeometryEnum {
+    fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
+        match self {
+            GeometryEnum::Sphere(g) => g.hit(ray, t_range),
+            GeometryEnum::Quad(g) => g.hit(ray, t_range),
+        }
+    }
+    fn bounding_box(&self) -> &AABB {
+        match self {
+            GeometryEnum::Sphere(g) => g.bounding_box(),
+            GeometryEnum::Quad(g) => g.bounding_box(),
+        }
+    }
+}
+
+pub struct Sphere<M: Material> {
     center: Point3,
     target_center: Point3,
     radius: f64,
-    material: Arc<dyn Material>,
+    material: M,
     bbox: AABB,
 }
 
-impl Sphere {
-    pub fn new(
-        center: Point3,
-        target_center: Point3,
-        radius: f64,
-        material: Arc<dyn Material>,
-    ) -> Self {
+impl<M: Material> Sphere<M> {
+    pub fn new(center: Point3, target_center: Point3, radius: f64, material: M) -> Self {
         Sphere {
             center,
             target_center,
@@ -37,7 +50,7 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl<M: Material + 'static> Hittable for Sphere<M> {
     fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
         let current_center = Vec3::mix(self.center, self.target_center, ray.time);
         let oc = current_center - ray.origin;
@@ -58,7 +71,7 @@ impl Hittable for Sphere {
                         p,
                         normal: if front_face { normal } else { -normal },
                         t: solve,
-                        material: self.material.as_ref(),
+                        material: &self.material,
                         front_face,
                         uv: get_sphere_uv(normal),
                     })
@@ -74,18 +87,18 @@ impl Hittable for Sphere {
     }
 }
 
-pub struct Quad {
+pub struct Quad<M: Material> {
     q: Vec3,
     edge: (Vec3, Vec3),
-    material: Arc<dyn Material>,
+    material: M,
     bbox: AABB,
     normal: Vec3,
     constant_d: f64,
     constant_w: Vec3,
 }
 
-impl Quad {
-    pub fn new(q: Vec3, u: Vec3, v: Vec3, material: Arc<dyn Material>) -> Self {
+impl<M: Material> Quad<M> {
+    pub fn new(q: Vec3, u: Vec3, v: Vec3, material: M) -> Self {
         let normal = u.cross(v);
         Quad {
             q,
@@ -99,7 +112,7 @@ impl Quad {
     }
 }
 
-impl Hittable for Quad {
+impl<M: Material + 'static> Hittable for Quad<M> {
     fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
         let (n, w) = (self.normal, self.constant_w);
         let denominator = n.dot(ray.direction);
@@ -119,7 +132,7 @@ impl Hittable for Quad {
                 p,
                 normal: (if front_face { n } else { -n }).normalize(),
                 t,
-                material: self.material.as_ref(),
+                material: &self.material,
                 front_face,
                 uv: Vec2::new(u_t, v_t),
             })

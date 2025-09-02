@@ -2,6 +2,7 @@ pub mod aabb;
 pub mod bvh;
 pub mod camera;
 pub mod color;
+pub mod config;
 pub mod geometry;
 pub mod hittable;
 pub mod material;
@@ -12,82 +13,46 @@ pub mod ray;
 pub mod texture;
 pub mod vec;
 
-use std::{sync::Arc, time::Instant};
+use std::time::Instant;
 
 use crate::{
-    bvh::BvhNode,
     camera::CameraBuilder,
     color::Color,
-    geometry::Quad,
+    config::{Configurable, build_world, load_config_from_file},
+    geometry::{Quad, Sphere},
     hittable::HittableList,
-    material::{DiffuseLight, Lambertian},
+    material::Lambertian,
     texture::SolidTexture,
     vec::{Point3, Vec3},
 };
 
 fn main() {
+    let config = load_config_from_file("config.toml");
+    let mut camera_builder = CameraBuilder::new();
+    if let Some(camera_config) = &config.camera {
+        camera_builder = camera_builder.apply_config(camera_config);
+    }
+    let camera = camera_builder.build();
     let mut world = HittableList::new();
-    let red = Arc::new(Lambertian::new(SolidTexture::new(Color::new(
-        0.8, 0.1, 0.1,
-    ))));
-    let green = Arc::new(Lambertian::new(SolidTexture::new(Color::new(
-        0.1, 0.8, 0.1,
-    ))));
-    let white = Arc::new(Lambertian::new(SolidTexture::new(Color::new(
-        0.8, 0.8, 0.8,
-    ))));
-    let box_size = 555.0;
-    world
-        .push(Quad::new(
-            Point3::new(box_size, 0.0, 0.0),
-            Vec3::from_axis_y(box_size),
-            Vec3::from_axis_z(box_size),
-            red.clone(),
-        ))
-        .push(Quad::new(
-            Point3::new(0.0, box_size, 0.0),
-            Vec3::from_axis_x(box_size),
-            Vec3::from_axis_z(box_size),
-            white.clone(),
-        ))
-        .push(Quad::new(
-            Point3::new(0.0, 0.0, box_size),
-            Vec3::from_axis_x(box_size),
-            Vec3::from_axis_y(box_size),
-            white.clone(),
-        ))
-        .push(Quad::new(
-            Point3::zero(),
-            Vec3::from_axis_x(box_size),
-            Vec3::from_axis_z(box_size),
-            white.clone(),
-        ))
-        .push(Quad::new(
-            Point3::zero(),
-            Vec3::from_axis_y(box_size),
-            Vec3::from_axis_z(box_size),
-            green.clone(),
-        ))
-        .push(Quad::new(
-            Point3::new(box_size * 0.4, box_size - 1.0, box_size * 0.4),
-            Vec3::from_axis_x(box_size * 0.2),
-            Vec3::from_axis_z(box_size * 0.2),
-            Arc::new(DiffuseLight::new(Color::one(), 20.0)),
-        ));
-
-    let mut world_bvh = HittableList::new();
-    world_bvh.push(BvhNode::new(&mut world.list));
-
-    let look_from = Point3::new(box_size * 0.5, box_size * 0.5, -box_size);
-    let look_at = Point3::new(box_size * 0.5, box_size * 0.5, box_size);
-    let camera = CameraBuilder::new(look_from, look_at)
-        .image_width(1920)
-        .vertical_fov(90.0)
-        .samples_per_pixel(200)
-        .max_ray_range(2000.0)
-        .build();
+    if config.objects.len() > 0 {
+        world = build_world(&config.objects);
+    } else {
+        world
+            .push(Sphere::new(
+                Point3::zero(),
+                Point3::zero(),
+                0.5,
+                Lambertian::new(SolidTexture::new(Color::from_single(0.8))),
+            ))
+            .push(Quad::new(
+                Point3::new(-100.0, -0.5, 100.0),
+                Vec3::from_axis_x(200.0),
+                Vec3::from_axis_z(-200.0),
+                Lambertian::new(SolidTexture::new(Color::from_single(0.8))),
+            ));
+    }
     let start_time = Instant::now();
-    camera.render(&world_bvh);
+    camera.render(&world);
     let elapsed_time = start_time.elapsed();
     println!("耗时{}秒", elapsed_time.as_secs_f64());
 }

@@ -11,6 +11,7 @@ use crate::{
     vec::{Point3, Vec3},
 };
 
+#[derive(Debug)]
 pub struct Camera {
     image_resolution: (u32, u32),
     pixel_delta_uv: (Vec3, Vec3),
@@ -95,35 +96,43 @@ impl Camera {
 }
 
 pub struct CameraBuilder {
-    vfov: f64,
-    look_from: Point3,
-    look_at: Point3,
-    vup: Vec3,
-    focus_dist: f64,
-    defocus_angle: f64,
-    background: Color,
-    aspect_ratio: f64,
-    image_width: u32,
-    samples_per_pixel: i32,
-    max_ray_range: f64,
-    max_depth: i32,
+    pub vfov: f64,
+    pub look_from: Point3,
+    pub look_at: Point3,
+    pub vup: Vec3,
+    pub focus_dist: f64,
+    pub defocus_angle: f64,
+    pub background: Color,
+    pub aspect_ratio: f64,
+    pub image_width: u32,
+    pub samples_per_pixel: i32,
+    pub max_ray_range: f64,
+    pub max_depth: i32,
 }
 impl CameraBuilder {
-    pub fn new(look_from: Point3, look_at: Point3) -> Self {
+    pub fn new() -> Self {
         Self {
             vfov: 45.0,
-            look_from,
-            look_at,
+            look_from: Point3::new(0.0, 1.0, 5.0),
+            look_at: Point3::new(0.0, 0.0, 0.0),
             vup: Vec3::new(0.0, 0.5, 0.0),
-            focus_dist: (look_at - look_from).length(),
+            focus_dist: 1.0,
             defocus_angle: 0.0,
-            background: Color::zero(),
+            background: Color::new(0.5, 0.7, 1.0),
             aspect_ratio: 16.0 / 9.0,
             image_width: 800,
             samples_per_pixel: 50,
             max_ray_range: 100.0,
             max_depth: 50,
         }
+    }
+    pub fn look_from(mut self, look_from: Point3) -> Self {
+        self.look_from = look_from;
+        self
+    }
+    pub fn look_at(mut self, look_at: Point3) -> Self {
+        self.look_at = look_at;
+        self
     }
     pub fn vertical_fov(mut self, vfov: f64) -> Self {
         self.vfov = vfov;

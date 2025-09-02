@@ -10,6 +10,22 @@ pub trait Texture {
     fn value(&self, uv: Vec2, p: Point3) -> Color;
 }
 
+pub enum TextureEnum {
+    SolidTexture(SolidTexture),
+    CheckerTexture(CheckerTexture),
+    NoiseTexture(NoiseTexture),
+}
+
+impl Texture for TextureEnum {
+    fn value(&self, uv: Vec2, p: Point3) -> Color {
+        match self {
+            TextureEnum::SolidTexture(t) => t.value(uv, p),
+            TextureEnum::CheckerTexture(t) => t.value(uv, p),
+            TextureEnum::NoiseTexture(t) => t.value(uv, p),
+        }
+    }
+}
+
 pub struct SolidTexture {
     color: Color,
 }

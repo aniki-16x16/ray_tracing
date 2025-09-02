@@ -1,0 +1,78 @@
+[camera]
+look_from = [250.5, 250.5, -500.0]
+look_at = [250.5, 250.5, 500.0]
+# view_up = [0.0, 0.5, 0.0]
+# image_width = 800
+# aspect_ratio = 1.777  # 16.0 / 9.0
+vertical_fov = 90.0
+# defocus_angle = 0.0
+# focus_dist = 10.0
+# samples_per_pixel = 50
+max_ray_range = 2000.0
+# max_depth = 50
+background_color = [0.0, 0.0, 0.0]
+
+[[objects]]
+type = "quad"
+q = [500.0, 0.0, 0.0]
+u = [0.0, 500.0, 0.0]
+v = [0.0, 0.0, 500.0]
+[objects.material]
+type = "lambertian"
+[objects.material.texture]
+type = "solid"
+color = [0.8, 0.1, 0.1]
+
+[[objects]]
+type = "quad"
+q = [0.0, 500.0, 0.0]
+u = [500.0, 0.0, 0.0]
+v = [0.0, 0.0, 500.0]
+[objects.material]
+type = "lambertian"
+[objects.material.texture]
+type = "solid"
+color = [0.8, 0.8, 0.8]
+
+[[objects]]
+type = "quad"
+q = [0.0, 0.0, 500.0]
+u = [500.0, 0.0, 0.0]
+v = [0.0, 500.0, 0.0]
+[objects.material]
+type = "lambertian"
+[objects.material.texture]
+type = "solid"
+color = [0.8, 0.8, 0.8]
+
+[[objects]]
+type = "quad"
+q = [0.0, 0.0, 0.0]
+u = [500.0, 0.0, 0.0]
+v = [0.0, 0.0, 500.0]
+[objects.material]
+type = "lambertian"
+[objects.material.texture]
+type = "solid"
+color = [0.8, 0.8, 0.8]
+
+[[objects]]
+type = "quad"
+q = [0.0, 0.0, 0.0]
+u = [0.0, 500.0, 0.0]
+v = [0.0, 0.0, 500.0]
+[objects.material]
+type = "lambertian"
+[objects.material.texture]
+type = "solid"
+color = [0.1, 0.8, 0.1]
+
+[[objects]]
+type = "quad"
+q = [200.0, 499.0, 200.0]
+u = [100.0, 0.0, 0.0]
+v = [0.0, 0.0, 100.0]
+[objects.material]
+type = "diffuse_light"
+color = [1.0, 1.0, 1.0]
+strength = 20.0

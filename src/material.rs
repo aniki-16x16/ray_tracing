@@ -1,12 +1,10 @@
-use std::sync::Arc;
-
 use crate::{
     color::Color,
     hittable::HitRecord,
     math::{reflect, refract, schlick_approx},
     random::{m_random, random_vector_on_sphere},
     ray::Ray,
-    texture::Texture,
+    texture::{Texture, TextureEnum},
     vec::Vec3,
 };
 
@@ -22,19 +20,43 @@ pub trait Material {
     }
 }
 
-pub struct Lambertian {
-    texture: Arc<dyn Texture>,
+pub enum MaterialEnum {
+    Lambertian(Lambertian<TextureEnum>),
+    Metal(Metal<TextureEnum>),
+    Dielectric(Dielectric),
+    DiffuseLight(DiffuseLight),
 }
 
-impl Lambertian {
-    pub fn new(texture: impl Texture + 'static) -> Self {
-        Lambertian {
-            texture: Arc::new(texture),
+impl Material for MaterialEnum {
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
+        match self {
+            MaterialEnum::Lambertian(m) => m.scatter(ray, record),
+            MaterialEnum::Metal(m) => m.scatter(ray, record),
+            MaterialEnum::Dielectric(m) => m.scatter(ray, record),
+            MaterialEnum::DiffuseLight(m) => m.scatter(ray, record),
+        }
+    }
+    fn emit(&self) -> Color {
+        match self {
+            MaterialEnum::Lambertian(m) => m.emit(),
+            MaterialEnum::Metal(m) => m.emit(),
+            MaterialEnum::Dielectric(m) => m.emit(),
+            MaterialEnum::DiffuseLight(m) => m.emit(),
         }
     }
 }
 
-impl Material for Lambertian {
+pub struct Lambertian<T: Texture> {
+    texture: T,
+}
+
+impl<T: Texture> Lambertian<T> {
+    pub fn new(texture: T) -> Self {
+        Lambertian { texture }
+    }
+}
+
+impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, _ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
         let scatter_direction = record.normal + random_vector_on_sphere(record.normal);
         Some(ScatterResult {
@@ -44,21 +66,18 @@ impl Material for Lambertian {
     }
 }
 
-pub struct Metal {
-    texture: Arc<dyn Texture>,
+pub struct Metal<T: Texture> {
+    texture: T,
     fuzz: f64,
 }
 
-impl Metal {
-    pub fn new(texture: impl Texture + 'static, fuzz: f64) -> Self {
-        Metal {
-            texture: Arc::new(texture),
-            fuzz,
-        }
+impl<T: Texture> Metal<T> {
+    pub fn new(texture: T, fuzz: f64) -> Self {
+        Metal { texture, fuzz }
     }
 }
 
-impl Material for Metal {
+impl<T: Texture> Material for Metal<T> {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
         let mut scatter_direction = reflect(ray.direction, record.normal).normalize();
         scatter_direction += Vec3::random_rage(-1.0..1.0) * self.fuzz;
