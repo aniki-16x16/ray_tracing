@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use crate::{
     ray::Ray,
-    vec::{Point3, Vec2},
+    vec::{Point3, Vec2, Vec3},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -66,5 +66,16 @@ impl AABB {
             }
         }
         true
+    }
+}
+
+impl std::ops::Add<Vec3> for AABB {
+    type Output = AABB;
+    fn add(self, rhs: Vec3) -> Self::Output {
+        AABB {
+            x_interval: self.x_interval + rhs.0,
+            y_interval: self.y_interval + rhs.1,
+            z_interval: self.z_interval + rhs.2,
+        }
     }
 }

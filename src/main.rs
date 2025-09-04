@@ -13,7 +13,7 @@ pub mod ray;
 pub mod texture;
 pub mod vec;
 
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
 use crate::{
     camera::CameraBuilder,
@@ -42,13 +42,13 @@ fn main() {
                 Point3::zero(),
                 Point3::zero(),
                 0.5,
-                Lambertian::new(SolidTexture::new(Color::from_single(0.8))),
+                Arc::new(Lambertian::new(SolidTexture::new(Color::from_single(0.8)))),
             ))
             .push(Quad::new(
                 Point3::new(-100.0, -0.5, 100.0),
                 Vec3::from_axis_x(200.0),
                 Vec3::from_axis_z(-200.0),
-                Lambertian::new(SolidTexture::new(Color::from_single(0.8))),
+                Arc::new(Lambertian::new(SolidTexture::new(Color::from_single(0.6)))),
             ));
     }
     let start_time = Instant::now();

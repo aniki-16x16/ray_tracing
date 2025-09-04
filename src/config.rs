@@ -3,12 +3,13 @@ use serde::Deserialize;
 use crate::bvh::BvhNode;
 use crate::camera::CameraBuilder;
 use crate::color::Color;
-use crate::geometry::{GeometryEnum, Quad, Sphere};
+use crate::geometry::{Cube, GeometryEnum, Quad, Sphere, Translate};
 use crate::hittable::HittableList;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, MaterialEnum, Metal};
 use crate::texture::{CheckerTexture, NoiseTexture, SolidTexture, TextureEnum};
 use crate::vec::{Point3, Vec2, Vec3};
 use std::fs;
+use std::sync::Arc;
 
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)] // 如果 toml 中有未知字段，则报错，有助于调试
@@ -144,6 +145,15 @@ pub enum GeometryConfig {
         v: Vec3,
         material: MaterialConfig,
     },
+    Cube {
+        a: Point3,
+        b: Point3,
+        material: MaterialConfig,
+    },
+    Translate {
+        instance: Box<GeometryConfig>,
+        offset: Vec3,
+    },
 }
 
 fn build_texture(config: &TextureConfig) -> TextureEnum {
@@ -164,18 +174,21 @@ fn build_texture(config: &TextureConfig) -> TextureEnum {
     }
 }
 
-fn build_material(config: &MaterialConfig) -> MaterialEnum {
+fn build_material(config: &MaterialConfig) -> Arc<MaterialEnum> {
     match config {
-        MaterialConfig::Lambertian { texture } => {
-            MaterialEnum::Lambertian(Lambertian::new(build_texture(texture)))
+        MaterialConfig::Lambertian { texture } => Arc::new(MaterialEnum::Lambertian(
+            Lambertian::new(build_texture(texture)),
+        )),
+        MaterialConfig::Metal { texture, fuzz } => Arc::new(MaterialEnum::Metal(Metal::new(
+            build_texture(texture),
+            fuzz.unwrap_or(0.0),
+        ))),
+        MaterialConfig::Dielectric { eta } => {
+            Arc::new(MaterialEnum::Dielectric(Dielectric::new(*eta)))
         }
-        MaterialConfig::Metal { texture, fuzz } => {
-            MaterialEnum::Metal(Metal::new(build_texture(texture), fuzz.unwrap_or(0.0)))
-        }
-        MaterialConfig::Dielectric { eta } => MaterialEnum::Dielectric(Dielectric::new(*eta)),
-        MaterialConfig::DiffuseLight { color, strength } => {
-            MaterialEnum::DiffuseLight(DiffuseLight::new(color.unwrap_or(Vec3::one()), *strength))
-        }
+        MaterialConfig::DiffuseLight { color, strength } => Arc::new(MaterialEnum::DiffuseLight(
+            DiffuseLight::new(color.unwrap_or(Vec3::one()), *strength),
+        )),
     }
 }
 
@@ -194,6 +207,12 @@ fn build_geometry(config: &GeometryConfig) -> GeometryEnum {
         )),
         GeometryConfig::Quad { q, u, v, material } => {
             GeometryEnum::Quad(Quad::new(*q, *u, *v, build_material(material)))
+        }
+        GeometryConfig::Cube { a, b, material } => {
+            GeometryEnum::Cube(Cube::new(*a, *b, build_material(material)))
+        }
+        GeometryConfig::Translate { instance, offset } => {
+            GeometryEnum::Translate(Translate::new(build_geometry(instance), *offset))
         }
     }
 }
