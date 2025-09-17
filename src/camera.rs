@@ -45,7 +45,6 @@ impl Camera {
         buffer
             .save("output.png")
             .expect("Failed to save render result.");
-        println!("\ndone");
     }
 
     fn calc_ray(&self, ray: &Ray, world: &HittableList, depth: i32) -> Vec3 {

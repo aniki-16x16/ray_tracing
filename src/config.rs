@@ -3,7 +3,7 @@ use serde::Deserialize;
 use crate::bvh::BvhNode;
 use crate::camera::CameraBuilder;
 use crate::color::Color;
-use crate::geometry::{Cube, GeometryEnum, Quad, Sphere, Translate};
+use crate::geometry::{Cube, GeometryEnum, Quad, RotateY, Sphere, Translate};
 use crate::hittable::HittableList;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, MaterialEnum, Metal};
 use crate::texture::{CheckerTexture, NoiseTexture, SolidTexture, TextureEnum};
@@ -154,6 +154,10 @@ pub enum GeometryConfig {
         instance: Box<GeometryConfig>,
         offset: Vec3,
     },
+    RotateY {
+        instance: Box<GeometryConfig>,
+        angle: f64,
+    },
 }
 
 fn build_texture(config: &TextureConfig) -> TextureEnum {
@@ -213,6 +217,9 @@ fn build_geometry(config: &GeometryConfig) -> GeometryEnum {
         }
         GeometryConfig::Translate { instance, offset } => {
             GeometryEnum::Translate(Translate::new(build_geometry(instance), *offset))
+        }
+        GeometryConfig::RotateY { instance, angle } => {
+            GeometryEnum::RotateY(RotateY::new(build_geometry(instance), *angle))
         }
     }
 }

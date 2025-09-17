@@ -4,7 +4,8 @@ use crate::{
     aabb::AABB,
     hittable::{HitRecord, Hittable},
     material::{Material, MaterialEnum},
-    math::get_sphere_uv,
+    math::{get_sphere_uv, mix},
+    matrix::Mat33,
     ray::Ray,
     vec::{Point3, Vec2, Vec3},
 };
@@ -14,23 +15,26 @@ pub enum GeometryEnum {
     Quad(Quad<MaterialEnum>),
     Cube(Cube<MaterialEnum>),
     Translate(Translate<GeometryEnum>),
+    RotateY(RotateY<GeometryEnum>),
 }
 
 impl Hittable for GeometryEnum {
     fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
         match self {
-            GeometryEnum::Sphere(g) => g.hit(ray, t_range),
-            GeometryEnum::Quad(g) => g.hit(ray, t_range),
-            GeometryEnum::Cube(g) => g.hit(ray, t_range),
-            GeometryEnum::Translate(g) => g.hit(ray, t_range),
+            Self::Sphere(g) => g.hit(ray, t_range),
+            Self::Quad(g) => g.hit(ray, t_range),
+            Self::Cube(g) => g.hit(ray, t_range),
+            Self::Translate(g) => g.hit(ray, t_range),
+            Self::RotateY(g) => g.hit(ray, t_range),
         }
     }
     fn bounding_box(&self) -> &AABB {
         match self {
-            GeometryEnum::Sphere(g) => g.bounding_box(),
-            GeometryEnum::Quad(g) => g.bounding_box(),
-            GeometryEnum::Cube(g) => g.bounding_box(),
-            GeometryEnum::Translate(g) => g.bounding_box(),
+            Self::Sphere(g) => g.bounding_box(),
+            Self::Quad(g) => g.bounding_box(),
+            Self::Cube(g) => g.bounding_box(),
+            Self::Translate(g) => g.bounding_box(),
+            Self::RotateY(g) => g.bounding_box(),
         }
     }
 }
@@ -160,8 +164,7 @@ pub struct Cube<M: Material> {
 
 impl<M: Material> Cube<M> {
     pub fn new(a: Vec3, b: Vec3, material: Arc<M>) -> Self {
-        let min = Point3::new(a.0.min(b.0), a.1.min(b.1), a.2.min(b.2));
-        let max = Point3::new(a.0.max(b.0), a.1.max(b.1), a.2.max(b.2));
+        let [min, max] = [a.min(b), a.max(b)];
         let dx = Vec3::from_axis_x(max.0 - min.0);
         let dy = Vec3::from_axis_y(max.1 - min.1);
         let dz = Vec3::from_axis_z(max.2 - min.2);
@@ -215,7 +218,87 @@ impl<G: Hittable> Translate<G> {
 impl<G: Hittable> Hittable for Translate<G> {
     fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
         let ray = ray.clone() - self.offset;
-        self.instance.hit(&ray, t_range)
+        self.instance.hit(&ray, t_range).map(|mut rec| {
+            rec.p += self.offset;
+            rec
+        })
+    }
+    fn bounding_box(&self) -> &AABB {
+        &self.bbox
+    }
+}
+
+pub struct RotateY<G: Hittable> {
+    instance: Box<G>,
+    bbox: AABB,
+    rot_mat: Mat33,
+    reverse_mat: Mat33,
+}
+
+impl<G: Hittable> RotateY<G> {
+    pub fn new(instance: G, angle: f64) -> Self {
+        let angle = angle.to_radians();
+        let [sin_theta, cos_theta] = [angle.sin(), angle.cos()];
+        let rot_mat = Mat33::new([
+            [cos_theta, 0.0, sin_theta],
+            [0.0, 1.0, 0.0],
+            [-sin_theta, 0.0, cos_theta],
+        ]);
+        let reverse_mat = Mat33::new([
+            [cos_theta, 0.0, -sin_theta],
+            [0.0, 1.0, 0.0],
+            [sin_theta, 0.0, cos_theta],
+        ]);
+        let [a, b] = {
+            let bbox = instance.bounding_box();
+            [
+                Vec3::new(bbox[0].0, bbox[1].0, bbox[2].0),
+                Vec3::new(bbox[0].1, bbox[1].1, bbox[2].1),
+            ]
+        };
+        let mut x_interval = Vec2(f64::MAX, f64::MIN);
+        let mut z_interval = x_interval.clone();
+        for i in 0..2 {
+            for j in 0..2 {
+                for k in 0..2 {
+                    let x = mix(a.0, b.0, i as f64);
+                    let y = mix(a.1, b.1, j as f64);
+                    let z = mix(a.2, b.2, k as f64);
+                    let point = rot_mat * Point3::new(x, y, z);
+                    x_interval = Vec2::new(x_interval.0.min(point.0), x_interval.1.max(point.1));
+                    z_interval = Vec2::new(z_interval.0.min(point.2), z_interval.1.max(point.2));
+                }
+            }
+        }
+        RotateY {
+            instance: Box::new(instance),
+            bbox: AABB::new(
+                Point3::new(x_interval.0, a.1, z_interval.0),
+                Point3::new(x_interval.1, b.1, z_interval.1),
+            ),
+            rot_mat,
+            reverse_mat,
+        }
+    }
+}
+
+impl<G: Hittable> Hittable for RotateY<G> {
+    fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
+        let &Self {
+            rot_mat,
+            reverse_mat,
+            ..
+        } = self;
+        let rotated_ray = Ray::new(
+            reverse_mat * ray.origin,
+            reverse_mat * ray.direction,
+            ray.time,
+        );
+        self.instance.hit(&rotated_ray, t_range).map(|mut rec| {
+            rec.p = rot_mat * rec.p;
+            rec.normal = rot_mat * rec.normal;
+            rec
+        })
     }
     fn bounding_box(&self) -> &AABB {
         &self.bbox

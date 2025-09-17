@@ -7,6 +7,7 @@ pub mod geometry;
 pub mod hittable;
 pub mod material;
 pub mod math;
+pub mod matrix;
 pub mod noise;
 pub mod random;
 pub mod ray;
@@ -54,5 +55,5 @@ fn main() {
     let start_time = Instant::now();
     camera.render(&world);
     let elapsed_time = start_time.elapsed();
-    println!("耗时{}秒", elapsed_time.as_secs_f64());
+    println!("\r耗时{}秒", elapsed_time.as_secs_f64());
 }

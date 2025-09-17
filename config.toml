@@ -1,22 +1,22 @@
 [camera]
-look_from = [250.5, 250.5, -280.0]
-look_at = [250.5, 250.5, 500.0]
-# view_up = [0.0, 0.5, 0.0]
-# image_width = 800
-# aspect_ratio = 1.777  # 16.0 / 9.0
-vertical_fov = 90.0
-# defocus_angle = 0.0
-# focus_dist = 10.0
+look_from = [250.5, 250.5, -280]
+look_at = [250.5, 250.5, 500]
+# view_up = [0, 0.5, 0]
+# image_width = 1920
+# aspect_ratio = 1.777  # 16 / 9
+vertical_fov = 90
+# defocus_angle = 0
+# focus_dist = 10
 samples_per_pixel = 30
-max_ray_range = 2000.0
+max_ray_range = 2000
 # max_depth = 50
-background_color = [0.0, 0.0, 0.0]
+background_color = [0, 0, 0]
 
 [[objects]]
 type = "quad"
-q = [500.0, 0.0, 0.0]
-u = [0.0, 500.0, 0.0]
-v = [0.0, 0.0, 500.0]
+q = [500, 0, 0]
+u = [0, 500, 0]
+v = [0, 0, 500]
 [objects.material]
 type = "lambertian"
 [objects.material.texture]
@@ -25,9 +25,9 @@ color = [0.8, 0.1, 0.1]
 
 [[objects]]
 type = "quad"
-q = [0.0, 500.0, 0.0]
-u = [500.0, 0.0, 0.0]
-v = [0.0, 0.0, 500.0]
+q = [0, 500, 0]
+u = [500, 0, 0]
+v = [0, 0, 500]
 [objects.material]
 type = "lambertian"
 [objects.material.texture]
@@ -36,9 +36,9 @@ color = [0.8, 0.8, 0.8]
 
 [[objects]]
 type = "quad"
-q = [0.0, 0.0, 500.0]
-u = [500.0, 0.0, 0.0]
-v = [0.0, 500.0, 0.0]
+q = [0, 0, 500]
+u = [500, 0, 0]
+v = [0, 500, 0]
 [objects.material]
 type = "lambertian"
 [objects.material.texture]
@@ -47,9 +47,9 @@ color = [0.8, 0.8, 0.8]
 
 [[objects]]
 type = "quad"
-q = [0.0, 0.0, 0.0]
-u = [500.0, 0.0, 0.0]
-v = [0.0, 0.0, 500.0]
+q = [0, 0, 0]
+u = [500, 0, 0]
+v = [0, 0, 500]
 [objects.material]
 type = "lambertian"
 [objects.material.texture]
@@ -58,9 +58,9 @@ color = [0.8, 0.8, 0.8]
 
 [[objects]]
 type = "quad"
-q = [0.0, 0.0, 0.0]
-u = [0.0, 500.0, 0.0]
-v = [0.0, 0.0, 500.0]
+q = [0, 0, 0]
+u = [0, 500, 0]
+v = [0, 0, 500]
 [objects.material]
 type = "lambertian"
 [objects.material.texture]
@@ -69,33 +69,42 @@ color = [0.1, 0.8, 0.1]
 
 [[objects]]
 type = "quad"
-q = [200.0, 499.0, 200.0]
-u = [100.0, 0.0, 0.0]
-v = [0.0, 0.0, 100.0]
+q = [100, 490, 100]
+u = [300, 0, 0]
+v = [0, 0, 300]
 [objects.material]
 type = "diffuse_light"
-color = [1.0, 1.0, 1.0]
-strength = 20.0
+color = [1, 1, 1]
+strength = 2
 
 [[objects]]
 type = "translate"
-offset = [-200.0, 0.0, 0.0]
+offset = [350, 165, 365]
 [objects.instance]
+type = "rotate_y"
+angle = 25
+[objects.instance.instance]
 type = "cube"
-a = [265.0, 0.0, 295.0]
-b = [430.0, 330.0, 460.0]
-[objects.instance.material]
+a = [-82.5, -165, -82.5]
+b = [82.5, 165, 82.5]
+[objects.instance.instance.material]
 type = "lambertian"
-[objects.instance.material.texture]
+[objects.instance.instance.material.texture]
 type = "solid"
 color = [0.8, 0.8, 0.8]
 
 [[objects]]
+type = "translate"
+offset = [150, 82.5, 215]
+[objects.instance]
+type = "rotate_y"
+angle = -25
+[objects.instance.instance]
 type = "cube"
-a = [130.0, 0.0, 65.0]
-b = [295.0, 165.0, 230.0]
-[objects.material]
+a = [-82.5, -82.5, -82.5]
+b = [82.5, 82.5, 82.5]
+[objects.instance.instance.material]
 type = "lambertian"
-[objects.material.texture]
+[objects.instance.instance.material.texture]
 type = "solid"
 color = [0.8, 0.8, 0.8]

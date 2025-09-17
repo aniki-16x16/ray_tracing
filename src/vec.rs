@@ -26,31 +26,37 @@ impl Vec3 {
         Vec3(0.0, 0.0, z)
     }
 
-    pub fn length_squared(&self) -> f64 {
+    pub fn length_squared(self) -> f64 {
         self.0 * self.0 + self.1 * self.1 + self.2 * self.2
     }
-    pub fn length(&self) -> f64 {
+    pub fn length(self) -> f64 {
         self.length_squared().sqrt()
     }
-    pub fn normalize(&self) -> Self {
+    pub fn normalize(self) -> Self {
         let tmp = self.length();
         Vec3(self.0 / tmp, self.1 / tmp, self.2 / tmp)
     }
-    pub fn dot(&self, v: Vec3) -> f64 {
+    pub fn dot(self, v: Vec3) -> f64 {
         self.0 * v.0 + self.1 * v.1 + self.2 * v.2
     }
-    pub fn cross(&self, v: Vec3) -> Self {
+    pub fn cross(self, v: Vec3) -> Self {
         Vec3(
             self.1 * v.2 - self.2 * v.1,
             self.2 * v.0 - self.0 * v.2,
             self.0 * v.1 - self.1 * v.0,
         )
     }
-    pub fn sqrt(&self) -> Self {
+    pub fn sqrt(self) -> Self {
         Vec3(self.0.sqrt(), self.1.sqrt(), self.2.sqrt())
     }
-    pub fn floor(&self) -> Self {
+    pub fn floor(self) -> Self {
         Vec3(self.0.floor(), self.1.floor(), self.2.floor())
+    }
+    pub fn min(self, v: Vec3) -> Self {
+        Vec3(self.0.min(v.0), self.1.min(v.1), self.2.min(v.2))
+    }
+    pub fn max(self, v: Vec3) -> Self {
+        Vec3(self.0.max(v.0), self.1.max(v.1), self.2.max(v.2))
     }
 
     pub fn zero() -> Self {
@@ -63,7 +69,7 @@ impl Vec3 {
     pub fn mix(a: Vec3, b: Vec3, t: f64) -> Self {
         Vec3(mix(a.0, b.0, t), mix(a.1, b.1, t), mix(a.2, b.2, t))
     }
-    pub fn map(&self, f: impl Fn(f64) -> f64) -> Self {
+    pub fn map(self, f: impl Fn(f64) -> f64) -> Self {
         Vec3(f(self.0), f(self.1), f(self.2))
     }
 
@@ -199,17 +205,17 @@ impl Vec2 {
         Vec2(v, v)
     }
 
-    pub fn length_squared(&self) -> f64 {
+    pub fn length_squared(self) -> f64 {
         self.0 * self.0 + self.1 * self.1
     }
-    pub fn length(&self) -> f64 {
+    pub fn length(self) -> f64 {
         self.length_squared().sqrt()
     }
-    pub fn normalize(&self) -> Self {
+    pub fn normalize(self) -> Self {
         let tmp = self.length();
         Vec2(self.0 / tmp, self.1 / tmp)
     }
-    pub fn dot(&self, v: Vec3) -> f64 {
+    pub fn dot(self, v: Vec3) -> f64 {
         self.0 * v.0 + self.1 * v.1
     }
 
