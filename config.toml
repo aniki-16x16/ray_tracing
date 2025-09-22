@@ -1,13 +1,13 @@
 [camera]
-look_from = [250.5, 250.5, -280]
+look_from = [250.5, 250.5, -800]
 look_at = [250.5, 250.5, 500]
 # view_up = [0, 0.5, 0]
-# image_width = 1920
-# aspect_ratio = 1.777  # 16 / 9
-vertical_fov = 90
+image_width = 600
+aspect_ratio = 1
+vertical_fov = 60
 # defocus_angle = 0
 # focus_dist = 10
-samples_per_pixel = 30
+samples_per_pixel = 100
 max_ray_range = 2000
 # max_depth = 50
 background_color = [0, 0, 0]
@@ -75,7 +75,7 @@ v = [0, 0, 300]
 [objects.material]
 type = "diffuse_light"
 color = [1, 1, 1]
-strength = 2
+strength = 5
 
 [[objects]]
 type = "translate"
@@ -108,3 +108,14 @@ type = "lambertian"
 [objects.instance.instance.material.texture]
 type = "solid"
 color = [0.8, 0.8, 0.8]
+
+[[objects]]
+type = "constant_medium"
+density = 0.01
+[objects.texture]
+type = "solid"
+color = [1, 1, 1]
+[objects.boundary]
+type = "cube"
+a = [0, 0, 0]
+b = [1000, 50, 1000]

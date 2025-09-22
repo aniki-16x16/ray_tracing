@@ -25,23 +25,32 @@ pub enum MaterialEnum {
     Metal(Metal<TextureEnum>),
     Dielectric(Dielectric),
     DiffuseLight(DiffuseLight),
+    Isotropic(Isotropic<TextureEnum>),
+}
+
+impl Default for MaterialEnum {
+    fn default() -> Self {
+        MaterialEnum::Lambertian(Lambertian::new(TextureEnum::default()))
+    }
 }
 
 impl Material for MaterialEnum {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
         match self {
-            MaterialEnum::Lambertian(m) => m.scatter(ray, record),
-            MaterialEnum::Metal(m) => m.scatter(ray, record),
-            MaterialEnum::Dielectric(m) => m.scatter(ray, record),
-            MaterialEnum::DiffuseLight(m) => m.scatter(ray, record),
+            Self::Lambertian(m) => m.scatter(ray, record),
+            Self::Metal(m) => m.scatter(ray, record),
+            Self::Dielectric(m) => m.scatter(ray, record),
+            Self::DiffuseLight(m) => m.scatter(ray, record),
+            Self::Isotropic(m) => m.scatter(ray, record),
         }
     }
     fn emit(&self) -> Color {
         match self {
-            MaterialEnum::Lambertian(m) => m.emit(),
-            MaterialEnum::Metal(m) => m.emit(),
-            MaterialEnum::Dielectric(m) => m.emit(),
-            MaterialEnum::DiffuseLight(m) => m.emit(),
+            Self::Lambertian(m) => m.emit(),
+            Self::Metal(m) => m.emit(),
+            Self::Dielectric(m) => m.emit(),
+            Self::DiffuseLight(m) => m.emit(),
+            Self::Isotropic(m) => m.emit(),
         }
     }
 }
@@ -141,5 +150,24 @@ impl Material for DiffuseLight {
     }
     fn emit(&self) -> Color {
         self.color * self.strength
+    }
+}
+
+pub struct Isotropic<T: Texture> {
+    texture: T,
+}
+
+impl<T: Texture> Isotropic<T> {
+    pub fn new(texture: T) -> Self {
+        Isotropic { texture }
+    }
+}
+
+impl<T: Texture> Material for Isotropic<T> {
+    fn scatter(&self, _ray: &Ray, record: &HitRecord) -> Option<ScatterResult> {
+        Some(ScatterResult {
+            attenuation: self.texture.value(record.uv, record.p),
+            scattered: Vec3::random_rage(-1.0..1.0).normalize(),
+        })
     }
 }

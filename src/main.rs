@@ -36,7 +36,7 @@ fn main() {
     let camera = camera_builder.build();
     let mut world = HittableList::new();
     if config.objects.len() > 0 {
-        world = build_world(&config.objects);
+        world = build_world(config.objects);
     } else {
         world
             .push(Sphere::new(

@@ -26,6 +26,12 @@ impl Texture for TextureEnum {
     }
 }
 
+impl Default for TextureEnum {
+    fn default() -> Self {
+        TextureEnum::SolidTexture(SolidTexture::new(Color::one()))
+    }
+}
+
 pub struct SolidTexture {
     color: Color,
 }

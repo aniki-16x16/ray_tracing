@@ -3,9 +3,9 @@ use serde::Deserialize;
 use crate::bvh::BvhNode;
 use crate::camera::CameraBuilder;
 use crate::color::Color;
-use crate::geometry::{Cube, GeometryEnum, Quad, RotateY, Sphere, Translate};
+use crate::geometry::{ConstantMedium, Cube, GeometryEnum, Quad, RotateY, Sphere, Translate};
 use crate::hittable::HittableList;
-use crate::material::{Dielectric, DiffuseLight, Lambertian, MaterialEnum, Metal};
+use crate::material::{Dielectric, DiffuseLight, Isotropic, Lambertian, MaterialEnum, Metal};
 use crate::texture::{CheckerTexture, NoiseTexture, SolidTexture, TextureEnum};
 use crate::vec::{Point3, Vec2, Vec3};
 use std::fs;
@@ -115,10 +115,10 @@ pub enum TextureConfig {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum MaterialConfig {
     Lambertian {
-        texture: TextureConfig,
+        texture: Option<TextureConfig>,
     },
     Metal {
-        texture: TextureConfig,
+        texture: Option<TextureConfig>,
         fuzz: Option<f64>,
     },
     Dielectric {
@@ -127,6 +127,9 @@ pub enum MaterialConfig {
     DiffuseLight {
         color: Option<Color>,
         strength: f64,
+    },
+    Isotropic {
+        texture: Option<TextureConfig>,
     },
 }
 
@@ -137,18 +140,18 @@ pub enum GeometryConfig {
         center: Point3,
         target_center: Option<Point3>,
         radius: f64,
-        material: MaterialConfig,
+        material: Option<MaterialConfig>,
     },
     Quad {
         q: Point3,
         u: Vec3,
         v: Vec3,
-        material: MaterialConfig,
+        material: Option<MaterialConfig>,
     },
     Cube {
         a: Point3,
         b: Point3,
-        material: MaterialConfig,
+        material: Option<MaterialConfig>,
     },
     Translate {
         instance: Box<GeometryConfig>,
@@ -158,9 +161,14 @@ pub enum GeometryConfig {
         instance: Box<GeometryConfig>,
         angle: f64,
     },
+    ConstantMedium {
+        boundary: Box<GeometryConfig>,
+        density: f64,
+        texture: TextureConfig,
+    },
 }
 
-fn build_texture(config: &TextureConfig) -> TextureEnum {
+fn build_texture(config: TextureConfig) -> TextureEnum {
     match config {
         TextureConfig::Solid { color } => {
             TextureEnum::SolidTexture(SolidTexture::new(color.unwrap_or(Color::from_single(0.8))))
@@ -178,25 +186,34 @@ fn build_texture(config: &TextureConfig) -> TextureEnum {
     }
 }
 
-fn build_material(config: &MaterialConfig) -> Arc<MaterialEnum> {
+fn build_material(config: MaterialConfig) -> Arc<MaterialEnum> {
+    let texture_helper = |texture: Option<TextureConfig>| {
+        texture.map_or_else(|| TextureEnum::default(), |t| build_texture(t))
+    };
     match config {
         MaterialConfig::Lambertian { texture } => Arc::new(MaterialEnum::Lambertian(
-            Lambertian::new(build_texture(texture)),
+            Lambertian::new(texture_helper(texture)),
         )),
         MaterialConfig::Metal { texture, fuzz } => Arc::new(MaterialEnum::Metal(Metal::new(
-            build_texture(texture),
+            texture_helper(texture),
             fuzz.unwrap_or(0.0),
         ))),
         MaterialConfig::Dielectric { eta } => {
-            Arc::new(MaterialEnum::Dielectric(Dielectric::new(*eta)))
+            Arc::new(MaterialEnum::Dielectric(Dielectric::new(eta)))
         }
         MaterialConfig::DiffuseLight { color, strength } => Arc::new(MaterialEnum::DiffuseLight(
-            DiffuseLight::new(color.unwrap_or(Vec3::one()), *strength),
+            DiffuseLight::new(color.unwrap_or(Vec3::one()), strength),
         )),
+        MaterialConfig::Isotropic { texture } => Arc::new(MaterialEnum::Isotropic(Isotropic::new(
+            texture_helper(texture),
+        ))),
     }
 }
 
-fn build_geometry(config: &GeometryConfig) -> GeometryEnum {
+fn build_geometry(config: GeometryConfig) -> GeometryEnum {
+    let material_helper = |material: Option<MaterialConfig>| {
+        material.map_or_else(|| Arc::new(MaterialEnum::default()), |m| build_material(m))
+    };
     match config {
         GeometryConfig::Sphere {
             center,
@@ -204,27 +221,36 @@ fn build_geometry(config: &GeometryConfig) -> GeometryEnum {
             radius,
             material,
         } => GeometryEnum::Sphere(Sphere::new(
-            *center,
-            target_center.unwrap_or(*center),
-            *radius,
-            build_material(material),
+            center,
+            target_center.unwrap_or(center),
+            radius,
+            material_helper(material),
         )),
         GeometryConfig::Quad { q, u, v, material } => {
-            GeometryEnum::Quad(Quad::new(*q, *u, *v, build_material(material)))
+            GeometryEnum::Quad(Quad::new(q, u, v, material_helper(material)))
         }
         GeometryConfig::Cube { a, b, material } => {
-            GeometryEnum::Cube(Cube::new(*a, *b, build_material(material)))
+            GeometryEnum::Cube(Cube::new(a, b, material_helper(material)))
         }
         GeometryConfig::Translate { instance, offset } => {
-            GeometryEnum::Translate(Translate::new(build_geometry(instance), *offset))
+            GeometryEnum::Translate(Translate::new(build_geometry(*instance), offset))
         }
         GeometryConfig::RotateY { instance, angle } => {
-            GeometryEnum::RotateY(RotateY::new(build_geometry(instance), *angle))
+            GeometryEnum::RotateY(RotateY::new(build_geometry(*instance), angle))
         }
+        GeometryConfig::ConstantMedium {
+            boundary,
+            density,
+            texture,
+        } => GeometryEnum::ConstantMedium(ConstantMedium::new(
+            build_geometry(*boundary),
+            density,
+            build_texture(texture),
+        )),
     }
 }
 
-pub fn build_world(config: &[GeometryConfig]) -> HittableList {
+pub fn build_world(config: Vec<GeometryConfig>) -> HittableList {
     let mut world = HittableList::new();
     for item in config {
         world.push(build_geometry(item));

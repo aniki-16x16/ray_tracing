@@ -3,10 +3,12 @@ use std::sync::Arc;
 use crate::{
     aabb::AABB,
     hittable::{HitRecord, Hittable},
-    material::{Material, MaterialEnum},
+    material::{Isotropic, Material, MaterialEnum},
     math::{get_sphere_uv, mix},
     matrix::Mat33,
+    random::m_random,
     ray::Ray,
+    texture::{Texture, TextureEnum},
     vec::{Point3, Vec2, Vec3},
 };
 
@@ -16,6 +18,7 @@ pub enum GeometryEnum {
     Cube(Cube<MaterialEnum>),
     Translate(Translate<GeometryEnum>),
     RotateY(RotateY<GeometryEnum>),
+    ConstantMedium(ConstantMedium<GeometryEnum, TextureEnum>),
 }
 
 impl Hittable for GeometryEnum {
@@ -26,6 +29,7 @@ impl Hittable for GeometryEnum {
             Self::Cube(g) => g.hit(ray, t_range),
             Self::Translate(g) => g.hit(ray, t_range),
             Self::RotateY(g) => g.hit(ray, t_range),
+            Self::ConstantMedium(g) => g.hit(ray, t_range),
         }
     }
     fn bounding_box(&self) -> &AABB {
@@ -35,6 +39,7 @@ impl Hittable for GeometryEnum {
             Self::Cube(g) => g.bounding_box(),
             Self::Translate(g) => g.bounding_box(),
             Self::RotateY(g) => g.bounding_box(),
+            Self::ConstantMedium(g) => g.bounding_box(),
         }
     }
 }
@@ -302,5 +307,67 @@ impl<G: Hittable> Hittable for RotateY<G> {
     }
     fn bounding_box(&self) -> &AABB {
         &self.bbox
+    }
+}
+
+pub struct ConstantMedium<G: Hittable, T: Texture> {
+    boundary: Box<G>,
+    neg_inv_density: f64,
+    phase_function: Isotropic<T>,
+}
+
+impl<G: Hittable, T: Texture> ConstantMedium<G, T> {
+    pub fn new(boundary: G, density: f64, texture: T) -> Self {
+        ConstantMedium {
+            boundary: Box::new(boundary),
+            neg_inv_density: -1.0 / density,
+            phase_function: Isotropic::new(texture),
+        }
+    }
+}
+
+impl<G: Hittable + 'static, T: Texture + 'static> Hittable for ConstantMedium<G, T> {
+    fn hit<'a>(&'a self, ray: &Ray, t_range: Vec2) -> Option<HitRecord<'a>> {
+        let mut rec1 = if let Some(rec) = self
+            .boundary
+            .hit(ray, Vec2::new(f64::NEG_INFINITY, f64::INFINITY))
+        {
+            rec
+        } else {
+            return None;
+        };
+        let mut rec2 = if let Some(rec) = self
+            .boundary
+            .hit(ray, Vec2::new(rec1.t + 0.00001, f64::INFINITY))
+        {
+            rec
+        } else {
+            return None;
+        };
+        rec1.t = rec1.t.max(t_range.0);
+        rec2.t = rec2.t.min(t_range.1);
+        if rec1.t > rec2.t {
+            return None;
+        };
+        rec1.t = rec1.t.max(0.0);
+        let ray_length = ray.direction.length();
+        let distance_inside = (rec2.t - rec1.t) * ray_length;
+        let hit_distance = self.neg_inv_density * m_random::<f64>().ln();
+        if distance_inside >= hit_distance {
+            let t = rec1.t + hit_distance / ray_length;
+            Some(HitRecord {
+                p: ray.at(t),
+                normal: Vec3::zero(),
+                t,
+                material: &self.phase_function,
+                front_face: true,
+                uv: Vec2::zero(),
+            })
+        } else {
+            None
+        }
+    }
+    fn bounding_box(&self) -> &AABB {
+        self.boundary.bounding_box()
     }
 }
